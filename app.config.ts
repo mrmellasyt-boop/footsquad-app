@@ -32,7 +32,7 @@ const env = {
   appSlug: "footsquad",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "",
+  logoUrl: "https://private-us-east-1.manuscdn.com/user_upload_by_module/session_file/310519663386660738/hBVEUgyWXeEyiGzy.png?Expires=1803684160&Signature=a5iD8c1Cpf~aCFBpdH1nfkyBZjG8r47lhedfLTL2WtCUojDSV3wZkjR9-5kGTCOCdPJdGmrJaC0OsHiDayGOFTMGC6WS36QD8noFEaVu~0FNDc23hjMPm-AN4jloF1jxyHgWnEgz7XqoibFc0g9AGDHnuHj0naM-rU7LbcJ-giSJfbCMWycwu0muums8UIy833Xka0Ids5dYs1T9WpV4L5MdJzwwu1El69rcofU90-biScoW3Pa9va-99wmiIkMjEg9D31P~y4xaTiKQWN29Nks7cOEC3p-8A7ooQiWt15mtQ19ZJNe1HSuAjETDcYw6gtzqI-8O9guAULbIuuj1bw__&Key-Pair-Id=K2HSFNDJXOU9YS",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
@@ -105,7 +105,7 @@ const config: ExpoConfig = {
         image: "./assets/images/splash-icon.png",
         imageWidth: 200,
         resizeMode: "contain",
-        backgroundColor: "#ffffff",
+        backgroundColor: "#0A0A0A",
         dark: {
           backgroundColor: "#000000",
         },

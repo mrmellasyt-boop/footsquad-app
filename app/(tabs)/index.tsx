@@ -1,48 +1,509 @@
-import { ScrollView, Text, View, TouchableOpacity } from "react-native";
-
+import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
+import { trpc } from "@/lib/trpc";
+import { useRouter } from "expo-router";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useAuth } from "@/hooks/use-auth";
+import { Image } from "expo-image";
 
-/**
- * Home Screen - NativeWind Example
- *
- * This template uses NativeWind (Tailwind CSS for React Native).
- * You can use familiar Tailwind classes directly in className props.
- *
- * Key patterns:
- * - Use `className` instead of `style` for most styling
- * - Theme colors: use tokens directly (bg-background, text-foreground, bg-primary, etc.); no dark: prefix needed
- * - Responsive: standard Tailwind breakpoints work on web
- * - Custom colors defined in tailwind.config.js
- */
-export default function HomeScreen() {
+function BestMomentSection() {
+  const { data: highlights, isLoading } = trpc.highlight.list.useQuery();
+  const topHighlight = highlights?.[0];
+
+  if (isLoading || !topHighlight) return null;
+
   return (
-    <ScreenContainer className="p-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        <View className="flex-1 gap-8">
-          {/* Hero Section */}
-          <View className="items-center gap-2">
-            <Text className="text-4xl font-bold text-foreground">Welcome</Text>
-            <Text className="text-base text-muted text-center">
-              Edit app/(tabs)/index.tsx to get started
-            </Text>
-          </View>
-
-          {/* Example Card */}
-          <View className="w-full max-w-sm self-center bg-surface rounded-2xl p-6 shadow-sm border border-border">
-            <Text className="text-lg font-semibold text-foreground mb-2">NativeWind Ready</Text>
-            <Text className="text-sm text-muted leading-relaxed">
-              Use Tailwind CSS classes directly in your React Native components.
-            </Text>
-          </View>
-
-          {/* Example Button */}
-          <View className="items-center">
-            <TouchableOpacity className="bg-primary px-6 py-3 rounded-full active:opacity-80">
-              <Text className="text-background font-semibold">Get Started</Text>
-            </TouchableOpacity>
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionIcon}>🔥</Text>
+        <Text style={styles.sectionTitle}>Best Moment</Text>
+        <Text style={styles.badge48h}>48H</Text>
+      </View>
+      <View style={styles.highlightCard}>
+        {topHighlight.mediaType === "photo" && topHighlight.mediaUrl && (
+          <Image source={{ uri: topHighlight.mediaUrl }} style={styles.highlightImage} contentFit="cover" />
+        )}
+        <View style={styles.highlightOverlay}>
+          <Text style={styles.highlightName}>{topHighlight.player?.fullName ?? "Unknown"}</Text>
+          <Text style={styles.highlightTeam}>
+            {topHighlight.team?.name ?? "Free Agent"} • {topHighlight.player?.city}
+          </Text>
+          <View style={styles.likesRow}>
+            <IconSymbol name="heart.fill" size={16} color="#FF4444" />
+            <Text style={styles.likesCount}>{topHighlight.likes}</Text>
           </View>
         </View>
-      </ScrollView>
+      </View>
+    </View>
+  );
+}
+
+function TopPlayersSection() {
+  const { data: players, isLoading } = trpc.player.leaderboard.useQuery({});
+  const router = useRouter();
+
+  if (isLoading) return null;
+  const top10 = (players ?? []).slice(0, 10);
+  if (top10.length === 0) return null;
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionIcon}>🏆</Text>
+        <Text style={styles.sectionTitle}>Top 10 Players</Text>
+      </View>
+      <FlatList
+        data={top10}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ paddingHorizontal: 4 }}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            style={styles.playerCard}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/player/${item.id}` as any)}
+          >
+            <View style={[styles.rankBadge, index === 0 && styles.rankGold, index === 1 && styles.rankSilver, index === 2 && styles.rankBronze]}>
+              <Text style={styles.rankText}>#{index + 1}</Text>
+            </View>
+            <View style={styles.playerAvatar}>
+              {item.photoUrl ? (
+                <Image source={{ uri: item.photoUrl }} style={styles.avatarImage} contentFit="cover" />
+              ) : (
+                <IconSymbol name="person.fill" size={28} color="#8A8A8A" />
+              )}
+            </View>
+            <Text style={styles.playerName} numberOfLines={1}>{item.fullName}</Text>
+            <Text style={styles.playerPosition}>{item.position}</Text>
+            <View style={styles.playerStats}>
+              <Text style={styles.statValue}>{item.totalPoints}</Text>
+              <Text style={styles.statLabel}>pts</Text>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
+    </View>
+  );
+}
+
+function UpcomingMatchesSection() {
+  const { data: matchList, isLoading } = trpc.match.upcoming.useQuery({});
+  const router = useRouter();
+
+  if (isLoading) return null;
+  if (!matchList || matchList.length === 0) {
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionIcon}>📅</Text>
+          <Text style={styles.sectionTitle}>Upcoming Matches</Text>
+        </View>
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyText}>No upcoming matches</Text>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionIcon}>📅</Text>
+        <Text style={styles.sectionTitle}>Upcoming Matches</Text>
+      </View>
+      {matchList.slice(0, 5).map((match) => (
+        <TouchableOpacity
+          key={match.id}
+          style={styles.matchCard}
+          activeOpacity={0.7}
+          onPress={() => router.push(`/match/${match.id}` as any)}
+        >
+          <View style={styles.matchTeams}>
+            <View style={styles.matchTeamCol}>
+              {match.teamA?.logoUrl ? (
+                <Image source={{ uri: match.teamA.logoUrl }} style={styles.teamLogo} contentFit="cover" />
+              ) : (
+                <View style={styles.teamLogoPlaceholder}>
+                  <IconSymbol name="shield.fill" size={24} color="#39FF14" />
+                </View>
+              )}
+              <Text style={styles.teamName} numberOfLines={1}>{match.teamA?.name ?? "TBD"}</Text>
+            </View>
+            <View style={styles.matchVs}>
+              <Text style={styles.vsText}>VS</Text>
+              <Text style={styles.matchFormat}>{match.format}</Text>
+            </View>
+            <View style={styles.matchTeamCol}>
+              {match.teamB?.logoUrl ? (
+                <Image source={{ uri: match.teamB.logoUrl }} style={styles.teamLogo} contentFit="cover" />
+              ) : (
+                <View style={styles.teamLogoPlaceholder}>
+                  <Text style={styles.tbd}>?</Text>
+                </View>
+              )}
+              <Text style={styles.teamName} numberOfLines={1}>{match.teamB?.name ?? "Waiting..."}</Text>
+            </View>
+          </View>
+          <View style={styles.matchInfo}>
+            <View style={styles.matchInfoRow}>
+              <IconSymbol name="location.fill" size={14} color="#8A8A8A" />
+              <Text style={styles.matchInfoText}>{match.city} • {match.pitchName}</Text>
+            </View>
+            <View style={styles.matchInfoRow}>
+              <IconSymbol name="calendar" size={14} color="#8A8A8A" />
+              <Text style={styles.matchInfoText}>
+                {new Date(match.matchDate).toLocaleDateString()} • {new Date(match.matchDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </Text>
+            </View>
+          </View>
+          {match.playerCount < match.maxPlayers && (
+            <View style={styles.joinBadge}>
+              <Text style={styles.joinText}>{match.playerCount}/{match.maxPlayers} players • Join</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+export default function HomeScreen() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  return (
+    <ScreenContainer>
+      <FlatList
+        data={[1]}
+        keyExtractor={() => "home"}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        renderItem={() => (
+          <View>
+            {/* Header */}
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.logoText}>FOOTSQUAD</Text>
+                <Text style={styles.tagline}>Play. Compete. Rise.</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.notifBtn}
+                onPress={() => router.push("/notifications" as any)}
+              >
+                <IconSymbol name="bell.fill" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            {!isAuthenticated && (
+              <View style={styles.loginBanner}>
+                <Text style={styles.loginBannerText}>Sign in to join matches and build your reputation</Text>
+                <TouchableOpacity
+                  style={styles.loginBtn}
+                  onPress={() => router.push("/login" as any)}
+                >
+                  <Text style={styles.loginBtnText}>Login</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <BestMomentSection />
+            <TopPlayersSection />
+            <UpcomingMatchesSection />
+          </View>
+        )}
+      />
     </ScreenContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  logoText: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: "#39FF14",
+    letterSpacing: 3,
+  },
+  tagline: {
+    fontSize: 13,
+    color: "#8A8A8A",
+    marginTop: 2,
+  },
+  notifBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#1A1A1A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loginBanner: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#39FF14",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  loginBannerText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    flex: 1,
+    marginRight: 12,
+  },
+  loginBtn: {
+    backgroundColor: "#39FF14",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  loginBtnText: {
+    color: "#0A0A0A",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  sectionIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    flex: 1,
+  },
+  badge48h: {
+    backgroundColor: "#FF4444",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
+    overflow: "hidden",
+  },
+  highlightCard: {
+    marginHorizontal: 20,
+    borderRadius: 16,
+    backgroundColor: "#1A1A1A",
+    overflow: "hidden",
+    height: 200,
+  },
+  highlightImage: {
+    width: "100%",
+    height: "100%",
+  },
+  highlightOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: "rgba(0,0,0,0.7)",
+  },
+  highlightName: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  highlightTeam: {
+    color: "#8A8A8A",
+    fontSize: 13,
+    marginTop: 2,
+  },
+  likesRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    gap: 4,
+  },
+  likesCount: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  playerCard: {
+    width: 120,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 6,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+  },
+  rankBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  rankGold: { backgroundColor: "#FFD700" },
+  rankSilver: { backgroundColor: "#C0C0C0" },
+  rankBronze: { backgroundColor: "#CD7F32" },
+  rankText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#0A0A0A",
+  },
+  playerAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#2A2A2A",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  avatarImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  playerName: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  playerPosition: {
+    color: "#39FF14",
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  playerStats: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginTop: 6,
+    gap: 2,
+  },
+  statValue: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  statLabel: {
+    color: "#8A8A8A",
+    fontSize: 11,
+  },
+  matchCard: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+  },
+  matchTeams: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  matchTeamCol: {
+    alignItems: "center",
+    flex: 1,
+  },
+  teamLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  teamLogoPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#2A2A2A",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tbd: {
+    color: "#8A8A8A",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  teamName: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "600",
+    marginTop: 6,
+    textAlign: "center",
+  },
+  matchVs: {
+    alignItems: "center",
+    paddingHorizontal: 12,
+  },
+  vsText: {
+    color: "#39FF14",
+    fontSize: 20,
+    fontWeight: "900",
+  },
+  matchFormat: {
+    color: "#8A8A8A",
+    fontSize: 11,
+    marginTop: 2,
+  },
+  matchInfo: {
+    marginTop: 12,
+    gap: 4,
+  },
+  matchInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  matchInfoText: {
+    color: "#8A8A8A",
+    fontSize: 12,
+  },
+  joinBadge: {
+    marginTop: 12,
+    backgroundColor: "rgba(57, 255, 20, 0.15)",
+    borderRadius: 8,
+    paddingVertical: 6,
+    alignItems: "center",
+  },
+  joinText: {
+    color: "#39FF14",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  emptyCard: {
+    marginHorizontal: 20,
+    backgroundColor: "#1A1A1A",
+    borderRadius: 16,
+    padding: 32,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#2A2A2A",
+  },
+  emptyText: {
+    color: "#8A8A8A",
+    fontSize: 14,
+  },
+});
