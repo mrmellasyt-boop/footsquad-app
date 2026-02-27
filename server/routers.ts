@@ -611,21 +611,20 @@ export const appRouter = router({
         ? await db.getTeamById(match.teamAId!)
         : await db.getTeamById(match.teamBId!);
       if (!myTeam || myTeam.captainId !== player.id) throw new Error("Only the captain can submit ratings");
-      // Verify rating only opponents (not own team)
-      const myTeamPlayers = matchPlayersList.filter(mp => mp.teamId === myMatchEntry.teamId).map(mp => mp.playerId);
-      const opponents = matchPlayersList.filter(mp => mp.teamId !== myMatchEntry.teamId && mp.joinStatus === "approved");
+      // Captain rates his OWN team players (including himself)
+      const myTeamPlayers = matchPlayersList.filter(mp => mp.teamId === myMatchEntry.teamId && mp.joinStatus === "approved");
+      const myTeamPlayerIds = myTeamPlayers.map(mp => mp.playerId);
       for (const r of input.ratings) {
-        if (myTeamPlayers.includes(r.playerId)) throw new Error("Cannot rate own teammates");
-        if (r.playerId === player.id) throw new Error("Cannot rate yourself");
+        if (!myTeamPlayerIds.includes(r.playerId)) throw new Error("You can only rate players from your own team");
       }
-      // ANTI-FAKE BUDGET: total points distributed must be <= opponentCount * 7
+      // ANTI-FAKE BUDGET: total points distributed must be <= teamCount * 7
       // This prevents giving 10/10 to everyone (max avg = 7)
-      const opponentCount = opponents.length;
-      if (opponentCount > 0) {
+      const teamCount = myTeamPlayers.length;
+      if (teamCount > 0) {
         const totalGiven = input.ratings.reduce((sum, r) => sum + r.score, 0);
-        const maxBudget = opponentCount * 7;
+        const maxBudget = teamCount * 7;
         if (totalGiven > maxBudget) {
-          throw new Error(`Total rating budget exceeded. You can distribute at most ${maxBudget} points across ${opponentCount} opponents (max avg 7/10).`);
+          throw new Error(`Total rating budget exceeded. You can distribute at most ${maxBudget} points across ${teamCount} players (max avg 7/10).`);
         }
       }
       for (const r of input.ratings) {

@@ -121,9 +121,10 @@ describe("Rating Anti-Fake Budget System", () => {
     expect(block).toContain("max(10)");
   });
 
-  it("rating.submit enforces budget: total <= opponentCount * 7", () => {
+  it("rating.submit enforces budget: total <= teamCount * 7", () => {
     const block = routers.substring(routers.indexOf("rating: router"), routers.indexOf("rating: router") + 3000);
-    expect(block).toContain("opponentCount * 7");
+    // Budget is based on own team size (captain rates own team)
+    expect(block).toContain("teamCount * 7");
     expect(block).toContain("maxBudget");
   });
 
@@ -132,9 +133,10 @@ describe("Rating Anti-Fake Budget System", () => {
     expect(block).toContain("Total rating budget exceeded");
   });
 
-  it("rating.submit only rates opponents (not teammates)", () => {
+  it("rating.submit only rates own team players", () => {
     const block = routers.substring(routers.indexOf("rating: router"), routers.indexOf("rating: router") + 3000);
-    expect(block).toContain("Cannot rate own teammates");
+    // Captain rates his own team players (not opponents)
+    expect(block).toContain("You can only rate players from your own team");
   });
 
   it("rating.submit calls updatePlayerRatingStats after submission", () => {

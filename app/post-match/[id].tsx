@@ -43,14 +43,14 @@ export default function PostMatchScreen() {
     return [...(match.rosterA || []), ...(match.rosterB || [])].filter(mp => mp.joinStatus === "approved");
   }, [match]);
 
-  // Opponents only (for rating)
-  const opponents = useMemo(() => {
+  // Own team players (for rating — captain rates his own team including himself)
+  const myTeamPlayers = useMemo(() => {
     if (!match || !me) return [];
     const myTeamId = me.teamId;
-    return allPlayers.filter(mp => mp.teamId !== myTeamId && mp.playerId !== me.id);
+    return allPlayers.filter(mp => mp.teamId === myTeamId);
   }, [allPlayers, match, me]);
 
-  const maxBudget = opponents.length * 7;
+  const maxBudget = myTeamPlayers.length * 7;
   const currentTotal = Object.values(playerRatings).reduce((a, b) => a + b, 0);
   const budgetLeft = maxBudget - currentTotal;
 
@@ -103,7 +103,7 @@ export default function PostMatchScreen() {
   };
 
   const handleSubmitRatings = async () => {
-    const ratingsArr = opponents.map(mp => ({
+    const ratingsArr = myTeamPlayers.map(mp => ({
       playerId: mp.playerId,
       score: playerRatings[mp.playerId] ?? 5,
     }));
@@ -298,10 +298,10 @@ export default function PostMatchScreen() {
           </View>
         )}
 
-        {/* STEP 3: Rate Opponents (all players, when match is completed) */}
-        {isCompleted && !hasRated && opponents.length > 0 && (
+        {/* STEP 3: Rate Own Team Players (when match is completed) */}
+        {isCompleted && !hasRated && myTeamPlayers.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>⭐ Rate Opponents</Text>
+            <Text style={styles.sectionTitle}>⭐ Rate Your Team</Text>
             <View style={styles.budgetBar}>
               <Text style={styles.budgetText}>
                 Budget: {currentTotal}/{maxBudget} pts used
@@ -319,7 +319,7 @@ export default function PostMatchScreen() {
             <Text style={styles.budgetHint}>
               Max avg 7/10 per player — prevents fake ratings
             </Text>
-            {opponents.map((mp) => (
+            {myTeamPlayers.map((mp) => (
               <View key={mp.playerId} style={styles.ratingRow}>
                 <View style={styles.ratingPlayerInfo}>
                   {mp.player?.photoUrl ? (

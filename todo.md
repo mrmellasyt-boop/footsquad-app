@@ -256,3 +256,9 @@
 - [x] Fix MOTM : seuls les joueurs approuvés du match peuvent voter (vérification voter + voté)
 - [x] Fix Rating : seul le capitaine approuvé du match peut soumettre les ratings de l'équipe adverse
 - [x] Supprimer RTL complètement de l'app (I18nManager retiré, arabe affiché en LTR)
+
+## Fix Rating Logic v2
+
+- [x] Backend : capitaine note ses propres joueurs (pas les adversaires)
+- [x] Backend : budget anti-triche adapté (total / nb joueurs propres, max avg 7/10)
+- [x] Frontend : post-match affiche les joueurs de sa propre équipe pour notation
