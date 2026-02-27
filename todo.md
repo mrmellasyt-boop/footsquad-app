@@ -236,9 +236,16 @@
 
 ## Fix Bugs v4
 
-- [ ] Fix RTL : désactiver proprement quand langue change AR → EN/FR (forceRTL false + reload)
-- [ ] Fix notification capitaine : notif immédiate quand joueur fait demande de join match
-- [ ] Fix clavier Login : KeyboardAvoidingView pour que le formulaire reste visible
-- [ ] Fix clavier Signup : KeyboardAvoidingView
-- [ ] Fix clavier Messages : scroll vers le bas quand clavier s'ouvre
-- [ ] Fix clavier Create Match : KeyboardAvoidingView
+- [x] Fix RTL : désactiver proprement quand langue change AR → EN/FR (forceRTL false + reload)
+- [x] Fix notification capitaine : notif immédiate quand joueur fait demande de join match
+- [x] Fix clavier Login : KeyboardAvoidingView behavior height pour Android
+- [x] Fix clavier Messages (Chat + DM) : KeyboardAvoidingView behavior height pour Android
+- [x] Fix clavier Create Match : KeyboardAvoidingView behavior height pour Android
+
+## Fix Notifications + Media Compression (Session 4)
+
+- [x] Fix badge rouge : afficher compteur notifs non lues sur le bouton notifications (Home + Profile)
+- [x] Ajouter son audio de notification (expo-audio, fichier notification.mp3)
+- [x] Expiration notifications : supprimer les notifs > 30 jours auto à l'ouverture de la page
+- [x] Compression images avant upload (expo-image-manipulator, max 1080px, 80% quality)
+- [x] Compression vidéos : quality 0.7 + max 30s dans ImagePicker

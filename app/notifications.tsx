@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
+import { useAudioPlayer } from "expo-audio";
 
 // Map notification types to icons and navigation targets
 function getNotifIcon(type: string): string {
@@ -179,6 +180,13 @@ export default function NotificationsScreen() {
   });
   const markAllMutation = trpc.notification.markAllRead.useMutation({ onSuccess: () => refetch() });
   const markOneMutation = trpc.notification.markRead.useMutation({ onSuccess: () => refetch() });
+  const deleteExpiredMutation = trpc.notification.deleteExpired.useMutation();
+  // Auto-delete expired notifications (>30 days) when page opens
+  useEffect(() => {
+    if (isAuthenticated) {
+      deleteExpiredMutation.mutate();
+    }
+  }, [isAuthenticated]);
   const acceptInvitationMutation = trpc.match.acceptInvitation.useMutation({
     onSuccess: (data) => {
       if (Platform.OS !== "web") {
@@ -197,7 +205,10 @@ export default function NotificationsScreen() {
 
   const [acceptingMatchId, setAcceptingMatchId] = useState<number | null>(null);
 
-  // Track previous unread count to trigger haptic when new notification arrives
+  // Sound player for notification (hooks must be called unconditionally)
+  const soundPlayer = useAudioPlayer(Platform.OS !== "web" ? require("@/assets/sounds/notification.mp3") : null);
+
+  // Track previous unread count to trigger haptic + sound when new notification arrives
   const prevUnreadCount = useRef(0);
   useEffect(() => {
     if (!notifications) return;
@@ -205,6 +216,7 @@ export default function NotificationsScreen() {
     if (unread > prevUnreadCount.current && prevUnreadCount.current >= 0) {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        try { soundPlayer?.play(); } catch (_) {}
       }
     }
     prevUnreadCount.current = unread;

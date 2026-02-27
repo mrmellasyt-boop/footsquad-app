@@ -8,6 +8,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Api from "@/lib/_core/api";
+import { compressProfilePhoto } from "@/lib/media-compress";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Language } from "@/lib/i18n/translations";
 
@@ -194,8 +195,9 @@ function ProfileView() {
       if (result.canceled || !result.assets[0]) return;
       setUploadingPhoto(true);
       const asset = result.assets[0];
+      const compressedUri = await compressProfilePhoto(asset.uri);
       const mimeType = asset.mimeType || "image/jpeg";
-      const url = await Api.uploadFile(asset.uri, mimeType);
+      const url = await Api.uploadFile(compressedUri, mimeType);
       updateMutation.mutate({ photoUrl: url });
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to upload photo");

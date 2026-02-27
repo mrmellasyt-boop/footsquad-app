@@ -12,6 +12,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Api from "@/lib/_core/api";
+import { compressTeamLogo } from "@/lib/media-compress";
 
 // ─── Stat Card ───
 function StatCard({ value, label, color = "#39FF14" }: { value: string | number; label: string; color?: string }) {
@@ -138,7 +139,8 @@ export default function TeamDetailScreen() {
       if (result.canceled || !result.assets[0]) return;
       setUploadingLogo(true);
       const asset = result.assets[0];
-      const url = await Api.uploadFile(asset.uri, asset.mimeType || "image/jpeg");
+      const compressedUri = await compressTeamLogo(asset.uri);
+      const url = await Api.uploadFile(compressedUri, asset.mimeType || "image/jpeg");
       updateLogoMutation.mutate({ teamId, logoUrl: url });
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to upload logo");

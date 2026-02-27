@@ -7,6 +7,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Api from "@/lib/_core/api";
+import { compressImage } from "@/lib/media-compress";
 
 export default function UploadHighlightScreen() {
   const router = useRouter();
@@ -64,7 +65,9 @@ export default function UploadHighlightScreen() {
     if (!mediaUri) return;
     setUploading(true);
     try {
-      const url = await Api.uploadFile(mediaUri, mimeType);
+      // Compress photos before upload (videos are already limited to 30s + quality 0.7)
+      const finalUri = mediaType === "photo" ? await compressImage(mediaUri) : mediaUri;
+      const url = await Api.uploadFile(finalUri, mimeType);
       createMutation.mutate({ mediaUrl: url, mediaType });
     } catch (err: any) {
       Alert.alert("Upload Error", err.message || "Failed to upload file");

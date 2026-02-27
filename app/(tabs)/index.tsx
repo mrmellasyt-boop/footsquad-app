@@ -228,6 +228,12 @@ export default function HomeScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
   const t = useT();
+  const { data: unreadData } = trpc.notification.unreadCount.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
+  });
+  const unreadCount = unreadData?.count ?? 0;
 
   return (
     <ScreenContainer>
@@ -248,6 +254,11 @@ export default function HomeScreen() {
                 onPress={() => router.push("/notifications" as any)}
               >
                 <IconSymbol name="bell.fill" size={22} color="#FFFFFF" />
+                {unreadCount > 0 && (
+                  <View style={styles.notifBadge}>
+                    <Text style={styles.notifBadgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -321,6 +332,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#1A1A1A",
     justifyContent: "center",
     alignItems: "center",
+  },
+  notifBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#FF3B30",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  notifBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
   },
   loginBanner: {
     marginHorizontal: 20,

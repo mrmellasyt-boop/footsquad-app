@@ -823,6 +823,19 @@ export const appRouter = router({
       await db.markAllNotificationsRead(player.id);
       return { success: true };
     }),
+    unreadCount: protectedProcedure.query(async ({ ctx }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player) return { count: 0 };
+      const notifs = await db.getPlayerNotifications(player.id);
+      const count = notifs.filter((n: any) => !n.isRead).length;
+      return { count };
+    }),
+    deleteExpired: protectedProcedure.mutation(async ({ ctx }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player) return { success: false };
+      await db.deleteExpiredNotifications(player.id);
+      return { success: true };
+    }),
   }),
 
    // ─── SEARCH ───

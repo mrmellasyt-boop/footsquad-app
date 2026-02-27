@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte, ne, sql, inArray, isNotNull, like, or } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, lt, ne, sql, inArray, isNotNull, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -610,6 +610,18 @@ export async function markAllNotificationsRead(playerId: number) {
   const db = await getDb();
   if (!db) return;
   await db.update(notifications).set({ isRead: true }).where(eq(notifications.playerId, playerId));
+}
+
+export async function deleteExpiredNotifications(playerId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  await db.delete(notifications).where(
+    and(
+      eq(notifications.playerId, playerId),
+      lt(notifications.createdAt, thirtyDaysAgo)
+    )
+  );
 }
 
 // ─── TEAM STATS ───
