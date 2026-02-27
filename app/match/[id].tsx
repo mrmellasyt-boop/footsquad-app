@@ -12,6 +12,10 @@ function RatingModal({ matchId, players, onClose }: { matchId: number; players: 
   const [playerRatings, setPlayerRatings] = useState<Record<number, number>>({});
   const submitMutation = trpc.rating.submit.useMutation({ onSuccess: onClose });
 
+  const maxBudget = players.length * 7;
+  const totalGiven = Object.values(playerRatings).reduce((sum, s) => sum + s, 0);
+  const budgetExceeded = totalGiven > maxBudget;
+
   const handleSubmit = () => {
     const ratingsArr = Object.entries(playerRatings).map(([pid, score]) => ({ playerId: Number(pid), score }));
     if (ratingsArr.length === 0) return;
@@ -23,27 +27,29 @@ function RatingModal({ matchId, players, onClose }: { matchId: number; players: 
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Rate Opponents</Text>
+            <Text style={styles.modalTitle}>Rate Your Team</Text>
             <TouchableOpacity onPress={onClose}>
               <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.modalSubtitle}>Rate opposing team players (1-5 stars)</Text>
+          <Text style={styles.modalSubtitle}>Rate your team players (1-10). Budget: {totalGiven}/{maxBudget} pts</Text>
+          {budgetExceeded && <Text style={{ color: '#FF4444', fontSize: 12, marginBottom: 8, textAlign: 'center' }}>Budget exceeded! Reduce some scores.</Text>}
           <ScrollView style={{ maxHeight: 400 }}>
             {players.map((p) => (
               <View key={p.id} style={styles.rateRow}>
                 <Text style={styles.rateName}>{p.fullName}</Text>
                 <View style={styles.starsRow}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <TouchableOpacity key={star} onPress={() => setPlayerRatings(prev => ({ ...prev, [p.id]: star }))}>
-                      <IconSymbol name="star.fill" size={28} color={(playerRatings[p.id] ?? 0) >= star ? "#FFD700" : "#2A2A2A"} />
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((score) => (
+                    <TouchableOpacity key={score} onPress={() => setPlayerRatings(prev => ({ ...prev, [p.id]: score }))}>
+                      <Text style={{ fontSize: 14, fontWeight: 'bold', color: (playerRatings[p.id] ?? 0) >= score ? '#39FF14' : '#2A2A2A', marginHorizontal: 2 }}>{score}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
+                {playerRatings[p.id] && <Text style={{ color: '#39FF14', fontWeight: 'bold', marginLeft: 8 }}>{playerRatings[p.id]}/10</Text>}
               </View>
             ))}
           </ScrollView>
-          <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitMutation.isPending}>
+          <TouchableOpacity style={[styles.submitBtn, budgetExceeded && styles.btnDisabled]} onPress={handleSubmit} disabled={submitMutation.isPending || budgetExceeded}>
             <Text style={styles.submitBtnText}>{submitMutation.isPending ? "Submitting..." : "Submit Ratings"}</Text>
           </TouchableOpacity>
         </View>
@@ -635,13 +641,13 @@ export default function MatchDetailScreen() {
                 </TouchableOpacity>
               </View>
             )}
-            {match.status === "completed" && isAuthenticated && (
+            {match.status === "completed" && isAuthenticated && isCaptainOfThisMatch && (
               <View style={styles.postMatchSection}>
                 <Text style={styles.sectionTitle}>Post-Match</Text>
                 {!hasRated && myTeamRosterPlayers.length > 0 && (
                   <TouchableOpacity style={styles.actionBtn} onPress={() => setShowRating(true)}>
                     <IconSymbol name="star.fill" size={20} color="#FFD700" />
-                    <Text style={styles.actionBtnText}>Rate Opponents</Text>
+                    <Text style={styles.actionBtnText}>Rate Your Team</Text>
                   </TouchableOpacity>
                 )}
                 {hasRated && <Text style={styles.completedAction}>Ratings submitted ✓</Text>}

@@ -329,3 +329,7 @@
 ## Bug join match - double capitaine (27 Feb 2026)
 
 - [x] Fix join match request : chaque capitaine voit uniquement les demandes pour son équipe (filtrage par teamSide)
+
+## Bug rating capitaine B (27 Feb 2026)
+
+- [x] Fix rating : les 2 capitaines notent leurs propres joueurs (1-10) avec budget affiché, section conditionnée à isCaptainOfThisMatch
