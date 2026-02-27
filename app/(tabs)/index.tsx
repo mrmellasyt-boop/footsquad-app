@@ -207,6 +207,26 @@ export default function HomeScreen() {
             )}
 
             <BestMomentSection />
+
+            {isAuthenticated && (
+              <View style={styles.quickActions}>
+                <TouchableOpacity
+                  style={styles.quickActionBtn}
+                  onPress={() => router.push("/upload-highlight" as any)}
+                >
+                  <IconSymbol name="bolt.fill" size={18} color="#0A0A0A" />
+                  <Text style={styles.quickActionText}>Post Highlight</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quickActionBtnOutline}
+                  onPress={() => router.push("/free-agents" as any)}
+                >
+                  <IconSymbol name="person.2.fill" size={18} color="#39FF14" />
+                  <Text style={styles.quickActionTextOutline}>Free Agents</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TopPlayersSection />
             <UpcomingMatchesSection />
           </View>
@@ -504,6 +524,44 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     color: "#8A8A8A",
+    fontSize: 14,
+  },
+  quickActions: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    gap: 10,
+    marginBottom: 20,
+  },
+  quickActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#39FF14",
+    borderRadius: 12,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+  },
+  quickActionText: {
+    color: "#0A0A0A",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  quickActionBtnOutline: {
+    flex: 1,
+    flexDirection: "row",
+    backgroundColor: "#1A1A1A",
+    borderRadius: 12,
+    paddingVertical: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#39FF14",
+  },
+  quickActionTextOutline: {
+    color: "#39FF14",
+    fontWeight: "700",
     fontSize: 14,
   },
 });

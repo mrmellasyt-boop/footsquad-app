@@ -101,6 +101,32 @@ export const appRouter = router({
     search: publicProcedure.input(z.object({ query: z.string() })).query(async ({ input }) => {
       return db.searchTeams(input.query);
     }),
+    updateLogo: protectedProcedure.input(z.object({ teamId: z.number(), logoUrl: z.string() })).mutation(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player || !player.isCaptain || player.teamId !== input.teamId) throw new Error("Only captain can update team logo");
+      await db.updateTeam(input.teamId, { logoUrl: input.logoUrl });
+      return { success: true };
+    }),
+    addPlayer: protectedProcedure.input(z.object({ teamId: z.number(), playerId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || captain.teamId !== input.teamId) throw new Error("Only captain can add players");
+      const target = await db.getPlayerById(input.playerId);
+      if (!target) throw new Error("Player not found");
+      if (target.teamId) throw new Error("Player already in a team");
+      await db.updatePlayer(input.playerId, { teamId: input.teamId, isFreeAgent: false });
+      await db.createNotification(input.playerId, "team_invite", "Team Invitation", `You have been added to a team`);
+      return { success: true };
+    }),
+    removePlayer: protectedProcedure.input(z.object({ teamId: z.number(), playerId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || captain.teamId !== input.teamId) throw new Error("Only captain can remove players");
+      if (input.playerId === captain.id) throw new Error("Captain cannot remove themselves");
+      const target = await db.getPlayerById(input.playerId);
+      if (!target || target.teamId !== input.teamId) throw new Error("Player not in this team");
+      await db.updatePlayer(input.playerId, { teamId: null, isFreeAgent: true });
+      await db.createNotification(input.playerId, "team_removed", "Removed from Team", `You have been removed from the team`);
+      return { success: true };
+    }),
   }),
 
   // ─── MATCH ───
@@ -198,6 +224,25 @@ export const appRouter = router({
       const accepted = requests.find(r => r.id === input.requestId);
       if (accepted) {
         await db.updateMatch(input.matchId, { teamBId: accepted.teamId, status: "confirmed" });
+      }
+      return { success: true };
+    }),
+    declineRequest: protectedProcedure.input(z.object({ requestId: z.number() })).mutation(async ({ ctx, input }) => {
+      await db.updateMatchRequest(input.requestId, "rejected");
+      return { success: true };
+    }),
+    inviteTeam: protectedProcedure.input(z.object({ matchId: z.number(), teamId: z.number() })).mutation(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player || !player.isCaptain) throw new Error("Only captains can invite teams");
+      const match = await db.getMatchById(input.matchId);
+      if (!match) throw new Error("Match not found");
+      if (match.teamBId) throw new Error("Match already has an opponent");
+      const targetTeam = await db.getTeamById(input.teamId);
+      if (!targetTeam) throw new Error("Team not found");
+      await db.createMatchRequest(input.matchId, input.teamId);
+      // Notify opponent captain
+      if (targetTeam.captainId) {
+        await db.createNotification(targetTeam.captainId, "match_invite", "Match Invitation", `Your team has been invited to a friendly match`, JSON.stringify({ matchId: input.matchId }));
       }
       return { success: true };
     }),

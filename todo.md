@@ -21,3 +21,18 @@
 - [x] Notifications screen
 - [x] App icon and branding
 - [x] Unit tests for all major features (54 tests passed)
+
+## Corrections v2
+
+- [x] Remove OAuth/social login, implement email+password auth in-app
+- [x] Login and Signup screens fully inside the app (no browser redirect)
+- [x] Profile edit (name, city, position, photo upload)
+- [x] Change password option in profile
+- [x] Team logo upload
+- [x] Captain can add players to team
+- [x] Captain can remove players from team
+- [x] Friendly match: search team by name
+- [x] Friendly match: send invitation to selected team
+- [x] Friendly match: opponent captain accept/decline
+- [x] Highlight upload (photo or short video)
+- [x] Highlight auto-delete after 48 hours

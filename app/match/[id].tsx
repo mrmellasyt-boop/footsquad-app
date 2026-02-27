@@ -117,6 +117,15 @@ export default function MatchDetailScreen() {
   const [showMotm, setShowMotm] = useState(false);
 
   const joinMutation = trpc.match.join.useMutation();
+  const utils = trpc.useUtils();
+
+  // Friendly match requests
+  const { data: matchRequests } = trpc.match.getRequests.useQuery({ matchId }, { enabled: isAuthenticated && !!match });
+  const acceptMutation = trpc.match.acceptRequest.useMutation({ onSuccess: () => utils.match.getById.invalidate({ id: matchId }) });
+  const declineMutation = trpc.match.declineRequest.useMutation({ onSuccess: () => utils.match.getById.invalidate({ id: matchId }) });
+
+  // Check if current player is captain of invited team
+  const pendingRequest = (matchRequests ?? []).find((r: any) => r.status === "pending" && player?.teamId === r.teamId && player?.isCaptain);
 
   if (isLoading) {
     return <ScreenContainer><View style={styles.center}><ActivityIndicator size="large" color="#39FF14" /></View></ScreenContainer>;
@@ -197,6 +206,30 @@ export default function MatchDetailScreen() {
                 <Text style={styles.infoText}>{match.format} • {playerCount}/{match.maxPlayers} players</Text>
               </View>
             </View>
+
+            {/* Friendly Match Invitation */}
+            {pendingRequest && (
+              <View style={styles.inviteCard}>
+                <Text style={styles.inviteTitle}>Match Invitation</Text>
+                <Text style={styles.inviteDesc}>Your team has been invited to this friendly match</Text>
+                <View style={styles.inviteBtns}>
+                  <TouchableOpacity
+                    style={styles.acceptBtn}
+                    onPress={() => acceptMutation.mutate({ requestId: pendingRequest.id, matchId })}
+                    disabled={acceptMutation.isPending}
+                  >
+                    <Text style={styles.acceptBtnText}>{acceptMutation.isPending ? "..." : "Accept"}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.declineBtn}
+                    onPress={() => declineMutation.mutate({ requestId: pendingRequest.id })}
+                    disabled={declineMutation.isPending}
+                  >
+                    <Text style={styles.declineBtnText}>{declineMutation.isPending ? "..." : "Decline"}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* Join Button */}
             {canJoin && (
@@ -366,4 +399,15 @@ const styles = StyleSheet.create({
   motmAvatarImg: { width: 36, height: 36, borderRadius: 18 },
   motmName: { color: "#FFFFFF", fontSize: 15, fontWeight: "600", flex: 1 },
   motmPos: { color: "#39FF14", fontSize: 12, fontWeight: "700" },
+  inviteCard: {
+    marginHorizontal: 20, backgroundColor: "#1A1A1A", borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: "#FFD700", marginBottom: 16,
+  },
+  inviteTitle: { color: "#FFD700", fontSize: 16, fontWeight: "800", marginBottom: 4 },
+  inviteDesc: { color: "#8A8A8A", fontSize: 13, marginBottom: 12 },
+  inviteBtns: { flexDirection: "row", gap: 10 },
+  acceptBtn: { flex: 1, backgroundColor: "#39FF14", borderRadius: 12, paddingVertical: 12, alignItems: "center" },
+  acceptBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 15 },
+  declineBtn: { flex: 1, backgroundColor: "#2A2A2A", borderRadius: 12, paddingVertical: 12, alignItems: "center", borderWidth: 1, borderColor: "#FF4444" },
+  declineBtnText: { color: "#FF4444", fontWeight: "800", fontSize: 15 },
 });

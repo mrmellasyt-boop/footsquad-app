@@ -141,6 +141,51 @@ export async function getMe(): Promise<{
   }
 }
 
+// ─── EMAIL + PASSWORD AUTH ───
+export async function signup(email: string, password: string, name: string): Promise<{ sessionToken: string; user: any }> {
+  const result = await apiCall<{ app_session_id: string; user: any }>("/api/auth/signup", {
+    method: "POST",
+    body: JSON.stringify({ email, password, name }),
+  });
+  return { sessionToken: result.app_session_id, user: result.user };
+}
+
+export async function login(email: string, password: string): Promise<{ sessionToken: string; user: any }> {
+  const result = await apiCall<{ app_session_id: string; user: any }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+  return { sessionToken: result.app_session_id, user: result.user };
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiCall<{ success: boolean }>("/api/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+export async function uploadFile(uri: string, mimeType: string): Promise<string> {
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/api/upload`;
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  const headers: Record<string, string> = { "Content-Type": mimeType };
+  if (Platform.OS !== "web") {
+    const token = await Auth.getSessionToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+  const uploadResponse = await fetch(url, {
+    method: "POST",
+    headers,
+    body: blob,
+    credentials: "include",
+  });
+  if (!uploadResponse.ok) throw new Error("Upload failed");
+  const data = await uploadResponse.json();
+  return data.url;
+}
+
 // Establish session cookie on the backend (3000-xxx domain)
 // Called after receiving token via postMessage to get a proper Set-Cookie from the backend
 export async function establishSession(token: string): Promise<boolean> {

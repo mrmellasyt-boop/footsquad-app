@@ -38,6 +38,13 @@ const MAPPING = {
   "ellipsis": "more-horiz",
   "checkmark.circle.fill": "check-circle",
   "xmark.circle.fill": "cancel",
+  "camera.fill": "camera-alt",
+  "pencil": "edit",
+  "lock.fill": "lock",
+  "video.fill": "videocam",
+  "trash.fill": "delete",
+  "person.badge.plus": "person-add",
+  "person.badge.minus": "person-remove",
 } as IconMapping;
 
 /**

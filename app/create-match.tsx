@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert, ActivityIndicator } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
@@ -15,10 +15,35 @@ export default function CreateMatchScreen() {
   const [maxPlayers, setMaxPlayers] = useState("10");
   const [showCityPicker, setShowCityPicker] = useState(false);
 
+  // Friendly match: team search
+  const [showTeamSearch, setShowTeamSearch] = useState(false);
+  const [teamSearchQuery, setTeamSearchQuery] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState<{ id: number; name: string; city: string } | null>(null);
+
   const { data: cities } = trpc.ref.cities.useQuery();
+  const { data: searchResults, isFetching: isSearching } = trpc.team.search.useQuery(
+    { query: teamSearchQuery },
+    { enabled: teamSearchQuery.length >= 2 }
+  );
+
   const createMutation = trpc.match.create.useMutation({
     onSuccess: (data) => {
-      router.replace(`/match/${data.id}` as any);
+      // If friendly match with selected team, send invitation
+      if (type === "friendly" && selectedTeam) {
+        inviteMutation.mutate({ matchId: data.id, teamId: selectedTeam.id });
+      } else {
+        router.replace(`/match/${data.id}` as any);
+      }
+    },
+    onError: (err) => {
+      Alert.alert("Error", err.message);
+    },
+  });
+
+  const inviteMutation = trpc.match.inviteTeam.useMutation({
+    onSuccess: (_, vars) => {
+      Alert.alert("Invitation Sent", `Invitation sent to ${selectedTeam?.name}. They will be notified.`);
+      router.replace(`/match/${vars.matchId}` as any);
     },
     onError: (err) => {
       Alert.alert("Error", err.message);
@@ -27,6 +52,10 @@ export default function CreateMatchScreen() {
 
   const handleCreate = () => {
     if (!city || !pitchName.trim() || !matchDate) return;
+    if (type === "friendly" && !selectedTeam) {
+      Alert.alert("Select Opponent", "Please search and select an opponent team for the friendly match.");
+      return;
+    }
     createMutation.mutate({
       type,
       city,
@@ -34,8 +63,11 @@ export default function CreateMatchScreen() {
       matchDate,
       format,
       maxPlayers: Number(maxPlayers),
+      teamBId: type === "friendly" && selectedTeam ? selectedTeam.id : undefined,
     });
   };
+
+  const isLoading = createMutation.isPending || inviteMutation.isPending;
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
@@ -53,7 +85,7 @@ export default function CreateMatchScreen() {
           <View style={styles.typeRow}>
             <TouchableOpacity
               style={[styles.typeBtn, type === "public" && styles.typeBtnActive]}
-              onPress={() => setType("public")}
+              onPress={() => { setType("public"); setSelectedTeam(null); }}
             >
               <Text style={[styles.typeText, type === "public" && styles.typeTextActive]}>Public</Text>
               <Text style={styles.typeDesc}>Anyone can request</Text>
@@ -67,6 +99,30 @@ export default function CreateMatchScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Opponent Team (Friendly only) */}
+        {type === "friendly" && (
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Opponent Team</Text>
+            {selectedTeam ? (
+              <View style={styles.selectedTeamCard}>
+                <IconSymbol name="shield.fill" size={24} color="#39FF14" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.selectedTeamName}>{selectedTeam.name}</Text>
+                  <Text style={styles.selectedTeamCity}>{selectedTeam.city}</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedTeam(null)}>
+                  <IconSymbol name="xmark.circle.fill" size={22} color="#FF4444" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.searchTeamBtn} onPress={() => setShowTeamSearch(true)}>
+                <IconSymbol name="magnifyingglass" size={18} color="#8A8A8A" />
+                <Text style={styles.searchTeamText}>Search team by name...</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         {/* City */}
         <View style={styles.formGroup}>
@@ -125,14 +181,21 @@ export default function CreateMatchScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.createBtn, (!city || !pitchName.trim() || !matchDate) && styles.btnDisabled]}
+          style={[styles.createBtn, (!city || !pitchName.trim() || !matchDate || (type === "friendly" && !selectedTeam)) && styles.btnDisabled]}
           onPress={handleCreate}
-          disabled={!city || !pitchName.trim() || !matchDate || createMutation.isPending}
+          disabled={!city || !pitchName.trim() || !matchDate || isLoading || (type === "friendly" && !selectedTeam)}
         >
-          <Text style={styles.createBtnText}>{createMutation.isPending ? "Creating..." : "Create Match"}</Text>
+          {isLoading ? (
+            <ActivityIndicator color="#0A0A0A" />
+          ) : (
+            <Text style={styles.createBtnText}>
+              {type === "friendly" ? "Create & Send Invitation" : "Create Match"}
+            </Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
 
+      {/* City Picker Modal */}
       <Modal visible={showCityPicker} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -146,6 +209,52 @@ export default function CreateMatchScreen() {
               {(cities ?? []).map((c) => (
                 <TouchableOpacity key={c} style={styles.cityItem} onPress={() => { setCity(c); setShowCityPicker(false); }}>
                   <Text style={[styles.cityText, city === c && styles.cityTextActive]}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Team Search Modal */}
+      <Modal visible={showTeamSearch} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Find Team</Text>
+              <TouchableOpacity onPress={() => { setShowTeamSearch(false); setTeamSearchQuery(""); }}>
+                <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search team name..."
+              placeholderTextColor="#555"
+              value={teamSearchQuery}
+              onChangeText={setTeamSearchQuery}
+              autoFocus
+            />
+            <ScrollView style={{ maxHeight: 350 }}>
+              {isSearching && <ActivityIndicator color="#39FF14" style={{ marginTop: 20 }} />}
+              {teamSearchQuery.length >= 2 && !isSearching && (!searchResults || searchResults.length === 0) && (
+                <Text style={styles.noResults}>No teams found</Text>
+              )}
+              {(searchResults ?? []).map((team: any) => (
+                <TouchableOpacity
+                  key={team.id}
+                  style={styles.teamResultRow}
+                  onPress={() => {
+                    setSelectedTeam({ id: team.id, name: team.name, city: team.city });
+                    setShowTeamSearch(false);
+                    setTeamSearchQuery("");
+                  }}
+                >
+                  <IconSymbol name="shield.fill" size={20} color="#39FF14" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.teamResultName}>{team.name}</Text>
+                    <Text style={styles.teamResultCity}>{team.city}</Text>
+                  </View>
+                  <IconSymbol name="chevron.right" size={16} color="#8A8A8A" />
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -181,6 +290,18 @@ const styles = StyleSheet.create({
   createBtn: { backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 16, alignItems: "center", marginTop: 12 },
   btnDisabled: { opacity: 0.4 },
   createBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 16 },
+  // Team search
+  searchTeamBtn: { backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: "#2A2A2A" },
+  searchTeamText: { color: "#555", fontSize: 15 },
+  selectedTeamCard: { flexDirection: "row", alignItems: "center", backgroundColor: "#1A1A1A", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "#39FF14", gap: 12 },
+  selectedTeamName: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  selectedTeamCity: { color: "#8A8A8A", fontSize: 12, marginTop: 2 },
+  searchInput: { backgroundColor: "#0A0A0A", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: "#FFFFFF", fontSize: 15, borderWidth: 1, borderColor: "#2A2A2A", marginBottom: 12 },
+  noResults: { color: "#8A8A8A", fontSize: 14, textAlign: "center", paddingVertical: 20 },
+  teamResultRow: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: "#2A2A2A", gap: 12 },
+  teamResultName: { color: "#FFFFFF", fontSize: 15, fontWeight: "700" },
+  teamResultCity: { color: "#8A8A8A", fontSize: 12, marginTop: 2 },
+  // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
   modalContent: { backgroundColor: "#1A1A1A", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "70%", padding: 20 },
   modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },

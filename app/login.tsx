@@ -1,64 +1,194 @@
-import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
+import { useState } from "react";
+import { Text, View, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { startOAuthLogin } from "@/constants/oauth";
+import * as Api from "@/lib/_core/api";
+import * as Auth from "@/lib/_core/auth";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!email.trim() || !password.trim()) {
+      setError("Email and password are required");
+      return;
+    }
+    if (mode === "signup" && !name.trim()) {
+      setError("Name is required");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      let result: { sessionToken: string; user: any };
+      if (mode === "signup") {
+        result = await Api.signup(email.trim(), password, name.trim());
+      } else {
+        result = await Api.login(email.trim(), password);
+      }
+
+      // Store session token and user info
+      if (result.sessionToken) {
+        await Auth.setSessionToken(result.sessionToken);
+      }
+      if (result.user) {
+        await Auth.setUserInfo({
+          id: result.user.id,
+          openId: result.user.openId,
+          name: result.user.name,
+          email: result.user.email,
+          loginMethod: result.user.loginMethod,
+          lastSignedIn: new Date(result.user.lastSignedIn),
+        });
+      }
+
+      // Also establish session cookie for web
+      if (Platform.OS === "web" && result.sessionToken) {
+        await Api.establishSession(result.sessionToken);
+      }
+
+      router.replace("/(tabs)/profile");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      <View style={styles.container}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
-        </TouchableOpacity>
-
-        <View style={styles.content}>
-          <View style={styles.logoWrap}>
-            <IconSymbol name="sportscourt.fill" size={64} color="#39FF14" />
-          </View>
-          <Text style={styles.title}>FOOTSQUAD</Text>
-          <Text style={styles.subtitle}>Play. Compete. Rise.</Text>
-
-          <View style={styles.features}>
-            <View style={styles.featureRow}>
-              <IconSymbol name="checkmark.circle.fill" size={20} color="#39FF14" />
-              <Text style={styles.featureText}>Build your player reputation</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol name="checkmark.circle.fill" size={20} color="#39FF14" />
-              <Text style={styles.featureText}>Create and join teams</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol name="checkmark.circle.fill" size={20} color="#39FF14" />
-              <Text style={styles.featureText}>Organize matches in your city</Text>
-            </View>
-            <View style={styles.featureRow}>
-              <IconSymbol name="checkmark.circle.fill" size={20} color="#39FF14" />
-              <Text style={styles.featureText}>Climb the leaderboard</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.loginBtn} onPress={() => startOAuthLogin()}>
-            <Text style={styles.loginBtnText}>Sign In to Continue</Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <IconSymbol name="arrow.left" size={22} color="#FFFFFF" />
           </TouchableOpacity>
-        </View>
-      </View>
+
+          <View style={styles.content}>
+            <View style={styles.logoWrap}>
+              <IconSymbol name="sportscourt.fill" size={64} color="#39FF14" />
+            </View>
+            <Text style={styles.title}>FOOTSQUAD</Text>
+            <Text style={styles.subtitle}>
+              {mode === "login" ? "Welcome back!" : "Create your account"}
+            </Text>
+
+            {/* Toggle */}
+            <View style={styles.toggleRow}>
+              <TouchableOpacity
+                style={[styles.toggleBtn, mode === "login" && styles.toggleBtnActive]}
+                onPress={() => { setMode("login"); setError(""); }}
+              >
+                <Text style={[styles.toggleText, mode === "login" && styles.toggleTextActive]}>Login</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggleBtn, mode === "signup" && styles.toggleBtnActive]}
+                onPress={() => { setMode("signup"); setError(""); }}
+              >
+                <Text style={[styles.toggleText, mode === "signup" && styles.toggleTextActive]}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Form */}
+            <View style={styles.form}>
+              {mode === "signup" && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  placeholderTextColor="#555"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                />
+              )}
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#555"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="next"
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                placeholderTextColor="#555"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+              />
+
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              <TouchableOpacity
+                style={[styles.submitBtn, loading && styles.btnDisabled]}
+                onPress={handleSubmit}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#0A0A0A" />
+                ) : (
+                  <Text style={styles.submitBtnText}>
+                    {mode === "login" ? "Login" : "Create Account"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#1A1A1A", justifyContent: "center", alignItems: "center", marginLeft: 20, marginTop: 8 },
-  content: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
-  logoWrap: { width: 120, height: 120, borderRadius: 60, backgroundColor: "#1A1A1A", justifyContent: "center", alignItems: "center", borderWidth: 3, borderColor: "#39FF14", marginBottom: 24 },
-  title: { fontSize: 36, fontWeight: "900", color: "#39FF14", letterSpacing: 4 },
-  subtitle: { fontSize: 16, color: "#8A8A8A", marginTop: 4, marginBottom: 40 },
-  features: { alignSelf: "stretch", gap: 16, marginBottom: 40 },
-  featureRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  featureText: { color: "#FFFFFF", fontSize: 15, fontWeight: "500" },
-  loginBtn: { backgroundColor: "#39FF14", paddingHorizontal: 40, paddingVertical: 16, borderRadius: 24, width: "100%", alignItems: "center" },
-  loginBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 17 },
+  scrollContent: { flexGrow: 1 },
+  backBtn: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: "#1A1A1A",
+    justifyContent: "center", alignItems: "center", marginLeft: 20, marginTop: 8,
+  },
+  content: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  logoWrap: {
+    width: 100, height: 100, borderRadius: 50, backgroundColor: "#1A1A1A",
+    justifyContent: "center", alignItems: "center", borderWidth: 3, borderColor: "#39FF14", marginBottom: 16,
+  },
+  title: { fontSize: 32, fontWeight: "900", color: "#39FF14", letterSpacing: 4 },
+  subtitle: { fontSize: 15, color: "#8A8A8A", marginTop: 4, marginBottom: 24 },
+  toggleRow: {
+    flexDirection: "row", backgroundColor: "#1A1A1A", borderRadius: 12,
+    padding: 4, marginBottom: 24, width: "100%", maxWidth: 320,
+  },
+  toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center" },
+  toggleBtnActive: { backgroundColor: "#39FF14" },
+  toggleText: { color: "#8A8A8A", fontWeight: "700", fontSize: 15 },
+  toggleTextActive: { color: "#0A0A0A" },
+  form: { width: "100%", maxWidth: 320, gap: 12 },
+  input: {
+    backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14,
+    color: "#FFFFFF", fontSize: 16, borderWidth: 1, borderColor: "#2A2A2A",
+  },
+  errorText: { color: "#FF4444", fontSize: 13, textAlign: "center" },
+  submitBtn: {
+    backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 16,
+    alignItems: "center", marginTop: 4,
+  },
+  btnDisabled: { opacity: 0.5 },
+  submitBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 17 },
 });
