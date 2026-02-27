@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#1A1A1A", justifyContent: "center", alignItems: "center", marginLeft: 20, marginTop: 8, marginBottom: 8 },
   teamHeader: { alignItems: "center", paddingVertical: 20 },
   teamLogo: { width: 96, height: 96, borderRadius: 48, backgroundColor: "#1A1A1A", justifyContent: "center", alignItems: "center", overflow: "hidden", borderWidth: 3, borderColor: "#39FF14", marginBottom: 12 },
-  teamLogoImg: { width: 96, height: 96, borderRadius: 48 },
+  teamLogoImg: { width: 96, height: 96, borderRadius: 48, overflow: "hidden" },
   cameraOverlay: { position: "absolute", bottom: 0, right: 0, backgroundColor: "#39FF14", borderRadius: 12, padding: 4 },
   teamName: { color: "#FFFFFF", fontSize: 24, fontWeight: "900" },
   teamCity: { color: "#8A8A8A", fontSize: 14, marginTop: 4 },

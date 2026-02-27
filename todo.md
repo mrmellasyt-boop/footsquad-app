@@ -43,3 +43,13 @@
 - [x] Highlight Detail screen (media viewer, like button, likes count, user info + city)
 - [x] All Highlights screen with filters by City and Team
 - [x] Player Profile: section showing active highlights (within 48h)
+
+## Fix Package 2: Team Logo Display
+
+- [x] Audit logoUrl flow (schema → db.ts → routers.ts → frontend)
+- [x] Fix backend: logoUrl stored and returned in all team queries
+- [x] Fix frontend: use logoUrl in Home match cards
+- [x] Fix frontend: use logoUrl in Matches screen cards
+- [x] Fix frontend: use logoUrl in Match Detail screen
+- [x] Fix frontend: use logoUrl in Team Page
+- [x] Proper fallback only when logoUrl is missing/null

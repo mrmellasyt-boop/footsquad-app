@@ -262,6 +262,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#1A1A1A",
+    borderWidth: 1.5,
+    borderColor: "#2A2A2A",
   },
   teamLogoPlaceholder: {
     width: 48,
@@ -270,6 +274,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#2A2A2A",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#2A2A2A",
   },
   tbd: {
     color: "#8A8A8A",

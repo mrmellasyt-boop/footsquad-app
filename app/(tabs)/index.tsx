@@ -504,6 +504,10 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
+    overflow: "hidden",
+    backgroundColor: "#1A1A1A",
+    borderWidth: 1.5,
+    borderColor: "#2A2A2A",
   },
   teamLogoPlaceholder: {
     width: 48,
