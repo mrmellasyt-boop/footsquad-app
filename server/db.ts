@@ -329,6 +329,70 @@ export async function updateMatchRequest(id: number, status: "accepted" | "rejec
   await db.update(matchRequests).set({ status }).where(eq(matchRequests.id, id));
 }
 
+// ─── POINTS & STATS AWARD ───
+export async function awardMatchPoints(
+  matchId: number,
+  scoreA: number,
+  scoreB: number,
+  teamAId: number,
+  teamBId: number
+) {
+  const database = await getDb();
+  if (!database) throw new Error("Database not available");
+  const teamAWon = scoreA > scoreB;
+  const teamBWon = scoreB > scoreA;
+  const isDraw = scoreA === scoreB;
+  const pointsA = teamAWon ? 3 : isDraw ? 1 : 0;
+  const pointsB = teamBWon ? 3 : isDraw ? 1 : 0;
+  const rosterA = await database.select().from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.teamSide, "A"), eq(matchPlayers.joinStatus, "approved")));
+  const rosterB = await database.select().from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.teamSide, "B"), eq(matchPlayers.joinStatus, "approved")));
+  for (const mp of rosterA) {
+    const p = await database.select().from(players).where(eq(players.id, mp.playerId)).limit(1);
+    if (p[0]) await database.update(players).set({ totalPoints: p[0].totalPoints + pointsA, totalMatches: p[0].totalMatches + 1 }).where(eq(players.id, mp.playerId));
+  }
+  for (const mp of rosterB) {
+    const p = await database.select().from(players).where(eq(players.id, mp.playerId)).limit(1);
+    if (p[0]) await database.update(players).set({ totalPoints: p[0].totalPoints + pointsB, totalMatches: p[0].totalMatches + 1 }).where(eq(players.id, mp.playerId));
+  }
+  const tA = await database.select().from(teams).where(eq(teams.id, teamAId)).limit(1);
+  if (tA[0]) await database.update(teams).set({ totalMatches: tA[0].totalMatches + 1, totalWins: tA[0].totalWins + (teamAWon ? 1 : 0) }).where(eq(teams.id, teamAId));
+  const tB = await database.select().from(teams).where(eq(teams.id, teamBId)).limit(1);
+  if (tB[0]) await database.update(teams).set({ totalMatches: tB[0].totalMatches + 1, totalWins: tB[0].totalWins + (teamBWon ? 1 : 0) }).where(eq(teams.id, teamBId));
+}
+
+export async function finalizeMotmWinner(matchId: number) {
+  const database = await getDb();
+  if (!database) return null;
+  const votes = await database.select().from(motmVotes).where(eq(motmVotes.matchId, matchId));
+  if (votes.length === 0) return null;
+  const counts: Record<number, number> = {};
+  for (const v of votes) counts[v.votedPlayerId] = (counts[v.votedPlayerId] || 0) + 1;
+  const maxVotes = Math.max(...Object.values(counts));
+  const winnerId = Number(Object.entries(counts).find(([, c]) => c === maxVotes)?.[0]);
+  if (!winnerId) return null;
+  const winner = await database.select().from(players).where(eq(players.id, winnerId)).limit(1);
+  if (winner[0]) await database.update(players).set({ motmCount: winner[0].motmCount + 1, totalPoints: winner[0].totalPoints + 2 }).where(eq(players.id, winnerId));
+  await database.update(matches).set({ motmWinnerId: winnerId, motmVotingOpen: false }).where(eq(matches.id, matchId));
+  return winnerId;
+}
+
+export async function updatePlayerRatingStats(matchId: number) {
+  const database = await getDb();
+  if (!database) return;
+  const allRatings = await database.select().from(ratings).where(eq(ratings.matchId, matchId));
+  const byPlayer: Record<number, number[]> = {};
+  for (const r of allRatings) {
+    if (!byPlayer[r.ratedPlayerId]) byPlayer[r.ratedPlayerId] = [];
+    byPlayer[r.ratedPlayerId].push(r.score);
+  }
+  for (const [pid, scores] of Object.entries(byPlayer)) {
+    const p = await database.select().from(players).where(eq(players.id, Number(pid))).limit(1);
+    if (p[0]) await database.update(players).set({ totalRatings: p[0].totalRatings + scores.reduce((a, b) => a + b, 0), ratingCount: p[0].ratingCount + scores.length }).where(eq(players.id, Number(pid)));
+  }
+}
+
 // ─── RATINGS ───
 export async function submitRating(matchId: number, raterId: number, ratedPlayerId: number, score: number) {
   const db = await getDb();

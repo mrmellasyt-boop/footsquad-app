@@ -412,20 +412,95 @@ export const appRouter = router({
       }
       return { success: true };
     }),
-    updateScore: protectedProcedure.input(z.object({
+    submitScore: protectedProcedure.input(z.object({
       matchId: z.number(),
-      scoreA: z.number(),
-      scoreB: z.number(),
+      scoreA: z.number().int().min(0),
+      scoreB: z.number().int().min(0),
     })).mutation(async ({ ctx, input }) => {
-      await db.updateMatch(input.matchId, {
-        scoreA: input.scoreA,
-        scoreB: input.scoreB,
-        status: "completed",
-        ratingsOpen: true,
-        motmVotingOpen: true,
-        ratingsClosedAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      });
-      return { success: true };
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player || !player.isCaptain) throw new Error("Only captains can submit scores");
+      const match = await db.getMatchById(input.matchId);
+      if (!match) throw new Error("Match not found");
+      if (match.status !== "confirmed" && match.status !== "in_progress") throw new Error("Match is not in a state to submit scores");
+      const teamA = match.teamAId ? await db.getTeamById(match.teamAId) : null;
+      const teamB = match.teamBId ? await db.getTeamById(match.teamBId) : null;
+      const isCapA = teamA?.captainId === player.id;
+      const isCapB = teamB?.captainId === player.id;
+      if (!isCapA && !isCapB) throw new Error("You are not a captain of either team in this match");
+      const scoreStr = `${input.scoreA}-${input.scoreB}`;
+      if (isCapA) {
+        await db.updateMatch(input.matchId, { scoreSubmittedByA: scoreStr, status: "in_progress" });
+      } else {
+        await db.updateMatch(input.matchId, { scoreSubmittedByB: scoreStr, status: "in_progress" });
+      }
+      const updated = await db.getMatchById(input.matchId);
+      if (!updated) throw new Error("Match not found after update");
+      const subA = updated.scoreSubmittedByA;
+      const subB = updated.scoreSubmittedByB;
+      if (!subA || !subB) {
+        const otherCaptainId = isCapA ? teamB?.captainId : teamA?.captainId;
+        if (otherCaptainId) {
+          await db.createNotification(
+            otherCaptainId, "score_request", "Score Submission Required",
+            `The opposing captain has submitted the score. Please submit your score for the match.`,
+            JSON.stringify({ matchId: input.matchId })
+          );
+        }
+        return { status: "waiting", message: "Score submitted. Waiting for opponent captain." };
+      }
+      if (subA === subB) {
+        const [sA, sB] = subA.split("-").map(Number);
+        await db.updateMatch(input.matchId, {
+          scoreA: sA, scoreB: sB,
+          status: "completed",
+          ratingsOpen: true,
+          motmVotingOpen: true,
+          ratingsClosedAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          scoreConflict: false,
+        });
+        if (match.teamAId && match.teamBId) {
+          await db.awardMatchPoints(input.matchId, sA, sB, match.teamAId, match.teamBId);
+        }
+        if (teamA?.captainId) await db.createNotification(teamA.captainId, "score_confirmed", "Score Confirmed ✅", `Final score: ${sA}-${sB}. Ratings and MOTM voting are now open!`, JSON.stringify({ matchId: input.matchId }));
+        if (teamB?.captainId) await db.createNotification(teamB.captainId, "score_confirmed", "Score Confirmed ✅", `Final score: ${sA}-${sB}. Ratings and MOTM voting are now open!`, JSON.stringify({ matchId: input.matchId }));
+        return { status: "confirmed", scoreA: sA, scoreB: sB };
+      } else {
+        const conflictCount = ((updated as any).scoreConflictCount ?? 0) + 1;
+        if (conflictCount >= 2) {
+          await db.updateMatch(input.matchId, {
+            status: "null_result",
+            scoreConflict: true,
+            scoreConflictCount: conflictCount,
+            scoreSubmittedByA: null,
+            scoreSubmittedByB: null,
+          });
+          if (teamA?.captainId) await db.createNotification(teamA.captainId, "score_null", "Match Result: NULL ❌", "Both captains submitted different scores twice. No points awarded.", JSON.stringify({ matchId: input.matchId }));
+          if (teamB?.captainId) await db.createNotification(teamB.captainId, "score_null", "Match Result: NULL ❌", "Both captains submitted different scores twice. No points awarded.", JSON.stringify({ matchId: input.matchId }));
+          return { status: "null_result", message: "Score conflict. Match result is null." };
+        } else {
+          await db.updateMatch(input.matchId, {
+            scoreConflict: true,
+            scoreConflictCount: conflictCount,
+            scoreSubmittedByA: null,
+            scoreSubmittedByB: null,
+            status: "in_progress",
+          });
+          if (teamA?.captainId) await db.createNotification(teamA.captainId, "score_conflict", "Score Conflict ⚠️", `Scores don't match (you: ${subA}, opponent: ${subB}). Please resubmit. Last chance!`, JSON.stringify({ matchId: input.matchId }));
+          if (teamB?.captainId) await db.createNotification(teamB.captainId, "score_conflict", "Score Conflict ⚠️", `Scores don't match (you: ${subB}, opponent: ${subA}). Please resubmit. Last chance!`, JSON.stringify({ matchId: input.matchId }));
+          return { status: "conflict", message: "Score mismatch. Both captains must resubmit." };
+        }
+      }
+    }),
+    getScoreStatus: publicProcedure.input(z.object({ matchId: z.number() })).query(async ({ input }) => {
+      const match = await db.getMatchById(input.matchId);
+      if (!match) return null;
+      return {
+        status: match.status,
+        scoreA: match.scoreA,
+        scoreB: match.scoreB,
+        scoreConflict: (match as any).scoreConflict,
+        motmWinnerId: (match as any).motmWinnerId,
+      };
     }),
   }),
 
@@ -433,20 +508,37 @@ export const appRouter = router({
   rating: router({
     submit: protectedProcedure.input(z.object({
       matchId: z.number(),
-      ratings: z.array(z.object({ playerId: z.number(), score: z.number().min(1).max(5) })),
+      ratings: z.array(z.object({ playerId: z.number(), score: z.number().int().min(1).max(10) })),
     })).mutation(async ({ ctx, input }) => {
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) throw new Error("Player not found");
       const alreadyRated = await db.hasPlayerRated(input.matchId, player.id);
       if (alreadyRated) throw new Error("Already rated");
+      const match = await db.getMatchById(input.matchId);
+      if (!match || !match.ratingsOpen) throw new Error("Ratings are not open for this match");
       // Verify rating only opponents
       const matchPlayersList = await db.getMatchPlayers(input.matchId);
       const myTeamPlayers = matchPlayersList.filter(mp => mp.teamId === player.teamId).map(mp => mp.playerId);
+      const opponents = matchPlayersList.filter(mp => mp.teamId !== player.teamId && mp.joinStatus === "approved");
       for (const r of input.ratings) {
         if (myTeamPlayers.includes(r.playerId)) throw new Error("Cannot rate own teammates");
         if (r.playerId === player.id) throw new Error("Cannot rate yourself");
+      }
+      // ANTI-FAKE BUDGET: total points distributed must be <= opponentCount * 7
+      // This prevents giving 10/10 to everyone (max avg = 7)
+      const opponentCount = opponents.length;
+      if (opponentCount > 0) {
+        const totalGiven = input.ratings.reduce((sum, r) => sum + r.score, 0);
+        const maxBudget = opponentCount * 7;
+        if (totalGiven > maxBudget) {
+          throw new Error(`Total rating budget exceeded. You can distribute at most ${maxBudget} points across ${opponentCount} opponents (max avg 7/10).`);
+        }
+      }
+      for (const r of input.ratings) {
         await db.submitRating(input.matchId, player.id, r.playerId, r.score);
       }
+      // Update player rating stats after all ratings submitted
+      await db.updatePlayerRatingStats(input.matchId);
       return { success: true };
     }),
     hasRated: protectedProcedure.input(z.object({ matchId: z.number() })).query(async ({ ctx, input }) => {
@@ -485,10 +577,34 @@ export const appRouter = router({
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) throw new Error("Player not found");
       if (input.votedPlayerId === player.id) throw new Error("Cannot vote for yourself");
+      const match = await db.getMatchById(input.matchId);
+      if (!match || !match.motmVotingOpen) throw new Error("MOTM voting is not open for this match");
       const alreadyVoted = await db.hasPlayerVotedMotm(input.matchId, player.id);
       if (alreadyVoted) throw new Error("Already voted");
+      // Verify voted player is in the match (either team)
+      const matchPlayersList = await db.getMatchPlayers(input.matchId);
+      const allPlayerIds = matchPlayersList.filter(mp => mp.joinStatus === "approved").map(mp => mp.playerId);
+      if (!allPlayerIds.includes(input.votedPlayerId)) throw new Error("Voted player is not in this match");
       await db.submitMotmVote(input.matchId, player.id, input.votedPlayerId);
-      return { success: true };
+      // Check if all eligible players have voted — if so, finalize winner
+      const totalVoters = allPlayerIds.length;
+      const votes = await db.getMotmVotes(input.matchId);
+      if (votes.length >= totalVoters) {
+        const winnerId = await db.finalizeMotmWinner(input.matchId);
+        if (winnerId) {
+          const winner = await db.getPlayerById(winnerId);
+          // Notify all match players of the MOTM winner
+          for (const pid of allPlayerIds) {
+            await db.createNotification(
+              pid, "motm_winner", "🏆 Man of the Match",
+              `${winner?.fullName ?? "A player"} has been voted Man of the Match!`,
+              JSON.stringify({ matchId: input.matchId, winnerId })
+            );
+          }
+          return { success: true, motmWinnerId: winnerId, finalized: true };
+        }
+      }
+      return { success: true, finalized: false };
     }),
     hasVoted: protectedProcedure.input(z.object({ matchId: z.number() })).query(async ({ ctx, input }) => {
       const player = await db.getPlayerByUserId(ctx.user.id);

@@ -603,6 +603,18 @@ export default function MatchDetailScreen() {
             </View>
 
             {/* Post-match actions */}
+            {(match.status === "confirmed" || match.status === "in_progress") && isCaptainOfThisMatch && (
+              <View style={styles.postMatchSection}>
+                <Text style={styles.sectionTitle}>Submit Score</Text>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => router.push(`/post-match/${matchId}` as any)}
+                >
+                  <IconSymbol name="checkmark.circle.fill" size={20} color="#39FF14" />
+                  <Text style={styles.actionBtnText}>Submit Match Score</Text>
+                </TouchableOpacity>
+              </View>
+            )}
             {match.status === "completed" && isAuthenticated && (
               <View style={styles.postMatchSection}>
                 <Text style={styles.sectionTitle}>Post-Match</Text>

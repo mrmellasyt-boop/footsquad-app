@@ -142,3 +142,19 @@
 - [ ] Integration tests: match invitations
 - [ ] Integration tests: points and rating calculation
 - [ ] Full system test report
+
+## Score Double-Validation + MOTM + Rating Budget
+
+- [ ] Schema: add scoreSubmittedA, scoreSubmittedB, scoreBTeamA, scoreBTeamB, scoreConflict, scoreConflictCount to matches
+- [ ] Backend: submitScore route (captain submits their version of score)
+- [ ] Backend: if both scores match → match completed, points awarded, MOTM + rating phase opens
+- [ ] Backend: if scores conflict → match null (no points), notification to both captains, 2nd chance
+- [ ] Backend: if 2nd attempt also conflicts → match null permanently, notification
+- [ ] Backend: MOTM vote route (both teams vote, any player from either team)
+- [ ] Backend: MOTM result = player with most votes, revealed after all votes submitted
+- [ ] Backend: rating with budget (captain has totalBudget = avgScore * numPlayers, must distribute all)
+- [ ] Backend: rating budget prevents 10 to everyone (budget enforced server-side)
+- [ ] Frontend: post-match screen with score form, MOTM vote, rating sliders with budget counter
+- [ ] Frontend: score conflict notification + retry form
+- [ ] Frontend: MOTM results reveal after all votes submitted
+- [ ] Frontend: rating budget display (remaining points shown live)

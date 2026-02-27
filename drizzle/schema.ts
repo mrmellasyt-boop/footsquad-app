@@ -58,7 +58,7 @@ export const teams = mysqlTable("teams", {
 export const matches = mysqlTable("matches", {
   id: int("id").autoincrement().primaryKey(),
   type: mysqlEnum("type", ["public", "friendly"]).notNull(),
-  status: mysqlEnum("status", ["pending", "confirmed", "in_progress", "completed", "cancelled"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "confirmed", "in_progress", "completed", "cancelled", "null_result"]).default("pending").notNull(),
   city: varchar("city", { length: 100 }).notNull(),
   pitchName: varchar("pitchName", { length: 255 }).notNull(),
   matchDate: timestamp("matchDate").notNull(),
@@ -67,12 +67,19 @@ export const matches = mysqlTable("matches", {
   maxPlayersPerTeam: int("maxPlayersPerTeam").notNull().default(5),
   teamAId: int("teamAId").notNull(),
   teamBId: int("teamBId"),
+  // Final confirmed score (set only when both captains agree)
   scoreA: int("scoreA"),
   scoreB: int("scoreB"),
+  // Score submitted by each captain independently
+  scoreSubmittedByA: varchar("scoreSubmittedByA", { length: 10 }), // e.g. "3-1" (teamA-teamB from A's perspective)
+  scoreSubmittedByB: varchar("scoreSubmittedByB", { length: 10 }), // e.g. "1-3" (teamA-teamB from B's perspective)
+  scoreConflict: boolean("scoreConflict").default(false).notNull(),
+  scoreConflictCount: int("scoreConflictCount").default(0).notNull(), // 0=no conflict yet, 1=first conflict (2nd chance), 2=final null
   createdBy: int("createdBy").notNull(),
   ratingsOpen: boolean("ratingsOpen").default(false).notNull(),
   ratingsClosedAt: timestamp("ratingsClosedAt"),
   motmVotingOpen: boolean("motmVotingOpen").default(false).notNull(),
+  motmWinnerId: int("motmWinnerId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
