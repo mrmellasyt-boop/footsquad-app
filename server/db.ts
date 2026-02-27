@@ -190,22 +190,32 @@ export async function getUpcomingMatches(city?: string) {
 export async function getPublicMatches() {
   const db = await getDb();
   if (!db) return [];
-  // Only show public matches (friendly matches are private until confirmed)
+  const now = new Date();
+  // Only show public matches that are not expired and not cancelled
   return db.select().from(matches)
-    .where(and(eq(matches.type, "public"), ne(matches.status, "cancelled")))
+    .where(and(
+      eq(matches.type, "public"),
+      ne(matches.status, "cancelled"),
+      gte(matches.matchDate, now)
+    ))
     .orderBy(desc(matches.createdAt)).limit(50);
 }
 
 export async function getPlayerMatches(playerId: number) {
   const db = await getDb();
   if (!db) return [];
-  // Matches where player is in the roster
+  const now = new Date();
+  // Matches where player is in the roster (upcoming + completed, not cancelled)
   const playerMatchIds = await db.select({ matchId: matchPlayers.matchId }).from(matchPlayers).where(eq(matchPlayers.playerId, playerId));
   const rosterIds = playerMatchIds.map(m => m.matchId);
   // Also include matches created by this player (as captain) — even if no roster entry yet
-  const createdMatches = await db.select().from(matches).where(eq(matches.createdBy, playerId)).orderBy(desc(matches.matchDate));
+  const createdMatches = await db.select().from(matches)
+    .where(and(eq(matches.createdBy, playerId), ne(matches.status, "cancelled")))
+    .orderBy(desc(matches.matchDate));
   if (rosterIds.length === 0) return createdMatches;
-  const rosterMatches = await db.select().from(matches).where(inArray(matches.id, rosterIds)).orderBy(desc(matches.matchDate));
+  const rosterMatches = await db.select().from(matches)
+    .where(and(inArray(matches.id, rosterIds), ne(matches.status, "cancelled")))
+    .orderBy(desc(matches.matchDate));
   // Merge and deduplicate by id
   const all = [...createdMatches, ...rosterMatches];
   const seen = new Set<number>();

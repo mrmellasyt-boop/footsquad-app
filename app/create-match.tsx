@@ -1,19 +1,34 @@
 import { useState } from "react";
-import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert, ActivityIndicator } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert, ActivityIndicator, Platform } from "react-native";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
+}
+
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
 
 export default function CreateMatchScreen() {
   const router = useRouter();
   const [type, setType] = useState<"public" | "friendly">("public");
   const [city, setCity] = useState("");
   const [pitchName, setPitchName] = useState("");
-  const [matchDate, setMatchDate] = useState("");
   const [format, setFormat] = useState<"5v5" | "8v8" | "11v11">("5v5");
   const [maxPlayers, setMaxPlayers] = useState("10");
   const [showCityPicker, setShowCityPicker] = useState(false);
+
+  // Date/time state
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  // For Android two-step flow
+  const [tempDate, setTempDate] = useState<Date>(new Date());
 
   // Friendly match: team search
   const [showTeamSearch, setShowTeamSearch] = useState(false);
@@ -28,16 +43,13 @@ export default function CreateMatchScreen() {
 
   const createMutation = trpc.match.create.useMutation({
     onSuccess: (data) => {
-      // If friendly match with selected team, send invitation
       if (type === "friendly" && selectedTeam) {
         inviteMutation.mutate({ matchId: data.id, teamId: selectedTeam.id });
       } else {
         router.replace(`/match/${data.id}` as any);
       }
     },
-    onError: (err) => {
-      Alert.alert("Error", err.message);
-    },
+    onError: (err) => Alert.alert("Error", err.message),
   });
 
   const inviteMutation = trpc.match.inviteTeam.useMutation({
@@ -45,29 +57,78 @@ export default function CreateMatchScreen() {
       Alert.alert("Invitation Sent", `Invitation sent to ${selectedTeam?.name}. They will be notified.`);
       router.replace(`/match/${vars.matchId}` as any);
     },
-    onError: (err) => {
-      Alert.alert("Error", err.message);
-    },
+    onError: (err) => Alert.alert("Error", err.message),
   });
 
   const handleCreate = () => {
-    if (!city || !pitchName.trim() || !matchDate) return;
+    if (!city) {
+      Alert.alert("Required", "Please select a city.");
+      return;
+    }
+    if (!pitchName.trim()) {
+      Alert.alert("Required", "Please enter a pitch or location name.");
+      return;
+    }
+    if (!selectedDate) {
+      Alert.alert("Required", "Please select a date and time for the match.");
+      return;
+    }
+    if (selectedDate <= new Date()) {
+      Alert.alert("Invalid Date", "Match date must be in the future.");
+      return;
+    }
     if (type === "friendly" && !selectedTeam) {
       Alert.alert("Select Opponent", "Please search and select an opponent team for the friendly match.");
       return;
     }
-    // NEVER pass teamBId at creation — opponent is set only after they accept the invite
     createMutation.mutate({
       type,
       city,
       pitchName: pitchName.trim(),
-      matchDate,
+      matchDate: selectedDate.toISOString(),
       format,
       maxPlayers: Number(maxPlayers),
     });
   };
 
+  // ── Date picker handlers ──────────────────────────────────────────────────
+  const onDateChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+      if (event.type === "set" && date) {
+        setTempDate(date);
+        setShowTimePicker(true); // chain to time picker on Android
+      }
+    } else {
+      if (date) setTempDate(date);
+    }
+  };
+
+  const onTimeChange = (event: DateTimePickerEvent, time?: Date) => {
+    if (Platform.OS === "android") {
+      setShowTimePicker(false);
+      if (event.type === "set" && time) {
+        const combined = new Date(tempDate);
+        combined.setHours(time.getHours(), time.getMinutes(), 0, 0);
+        setSelectedDate(combined);
+      }
+    } else {
+      if (time) {
+        const combined = new Date(tempDate);
+        combined.setHours(time.getHours(), time.getMinutes(), 0, 0);
+        setSelectedDate(combined);
+      }
+    }
+  };
+
+  const confirmIOSDateTime = () => {
+    setSelectedDate(tempDate);
+    setShowDatePicker(false);
+    setShowTimePicker(false);
+  };
+
   const isLoading = createMutation.isPending || inviteMutation.isPending;
+  const isFormValid = !!city && !!pitchName.trim() && !!selectedDate && (type !== "friendly" || !!selectedTeam);
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
@@ -103,7 +164,7 @@ export default function CreateMatchScreen() {
         {/* Opponent Team (Friendly only) */}
         {type === "friendly" && (
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Opponent Team</Text>
+            <Text style={styles.label}>Opponent Team <Text style={styles.required}>*</Text></Text>
             {selectedTeam ? (
               <View style={styles.selectedTeamCard}>
                 <IconSymbol name="shield.fill" size={24} color="#39FF14" />
@@ -126,7 +187,7 @@ export default function CreateMatchScreen() {
 
         {/* City */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>City</Text>
+          <Text style={styles.label}>City <Text style={styles.required}>*</Text></Text>
           <TouchableOpacity style={styles.selectBtn} onPress={() => setShowCityPicker(true)}>
             <Text style={city ? styles.selectText : styles.selectPlaceholder}>{city || "Select city"}</Text>
             <IconSymbol name="chevron.right" size={16} color="#8A8A8A" />
@@ -135,20 +196,57 @@ export default function CreateMatchScreen() {
 
         {/* Pitch Name */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Pitch / Location</Text>
-          <TextInput style={styles.textInput} placeholder="e.g. Terrain Hay Riad" placeholderTextColor="#555" value={pitchName} onChangeText={setPitchName} />
-        </View>
-
-        {/* Date */}
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Date & Time</Text>
+          <Text style={styles.label}>Pitch / Location <Text style={styles.required}>*</Text></Text>
           <TextInput
             style={styles.textInput}
-            placeholder="YYYY-MM-DD HH:MM"
+            placeholder="e.g. Terrain Hay Riad"
             placeholderTextColor="#555"
-            value={matchDate}
-            onChangeText={setMatchDate}
+            value={pitchName}
+            onChangeText={setPitchName}
           />
+        </View>
+
+        {/* Date & Time — native picker */}
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Date & Time <Text style={styles.required}>*</Text></Text>
+
+          <View style={styles.dateTimeRow}>
+            {/* Date button */}
+            <TouchableOpacity
+              style={[styles.dateBtn, !selectedDate && styles.dateBtnEmpty]}
+              onPress={() => {
+                setTempDate(selectedDate ?? new Date());
+                setShowDatePicker(true);
+              }}
+            >
+              <IconSymbol name="calendar" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
+              <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
+                {selectedDate ? formatDate(selectedDate) : "Pick date"}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Time button */}
+            <TouchableOpacity
+              style={[styles.timeBtn, !selectedDate && styles.dateBtnEmpty]}
+              onPress={() => {
+                setTempDate(selectedDate ?? new Date());
+                if (Platform.OS === "android") {
+                  setShowTimePicker(true);
+                } else {
+                  setShowTimePicker(true);
+                }
+              }}
+            >
+              <IconSymbol name="clock.fill" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
+              <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
+                {selectedDate ? formatTime(selectedDate) : "Pick time"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {!selectedDate && (
+            <Text style={styles.requiredHint}>Date and time are required</Text>
+          )}
         </View>
 
         {/* Format */}
@@ -169,10 +267,10 @@ export default function CreateMatchScreen() {
 
         {/* Max Players */}
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Max Players</Text>
+          <Text style={styles.label}>Max Players per Team</Text>
           <TextInput
             style={styles.textInput}
-            placeholder="10"
+            placeholder="5"
             placeholderTextColor="#555"
             value={maxPlayers}
             onChangeText={setMaxPlayers}
@@ -181,9 +279,9 @@ export default function CreateMatchScreen() {
         </View>
 
         <TouchableOpacity
-          style={[styles.createBtn, (!city || !pitchName.trim() || !matchDate || (type === "friendly" && !selectedTeam)) && styles.btnDisabled]}
+          style={[styles.createBtn, !isFormValid && styles.btnDisabled]}
           onPress={handleCreate}
-          disabled={!city || !pitchName.trim() || !matchDate || isLoading || (type === "friendly" && !selectedTeam)}
+          disabled={!isFormValid || isLoading}
         >
           {isLoading ? (
             <ActivityIndicator color="#0A0A0A" />
@@ -194,6 +292,80 @@ export default function CreateMatchScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+
+      {/* ── Date Picker (iOS inline / Android modal) ── */}
+      {showDatePicker && (
+        Platform.OS === "ios" ? (
+          <Modal visible transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Select Date</Text>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={tempDate}
+                  mode="date"
+                  display="spinner"
+                  minimumDate={new Date()}
+                  onChange={(e, d) => { if (d) setTempDate(d); }}
+                  textColor="#FFFFFF"
+                  style={{ backgroundColor: "#1A1A1A" }}
+                />
+                <TouchableOpacity style={styles.confirmBtn} onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}>
+                  <Text style={styles.confirmBtnText}>Next: Pick Time</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        ) : (
+          <DateTimePicker
+            value={tempDate}
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={onDateChange}
+          />
+        )
+      )}
+
+      {/* ── Time Picker ── */}
+      {showTimePicker && (
+        Platform.OS === "ios" ? (
+          <Modal visible transparent animationType="slide">
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Select Time</Text>
+                  <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                    <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
+                  </TouchableOpacity>
+                </View>
+                <DateTimePicker
+                  value={tempDate}
+                  mode="time"
+                  display="spinner"
+                  onChange={(e, d) => { if (d) setTempDate(d); }}
+                  textColor="#FFFFFF"
+                  style={{ backgroundColor: "#1A1A1A" }}
+                />
+                <TouchableOpacity style={styles.confirmBtn} onPress={confirmIOSDateTime}>
+                  <Text style={styles.confirmBtnText}>Confirm</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        ) : (
+          <DateTimePicker
+            value={tempDate}
+            mode="time"
+            display="default"
+            onChange={onTimeChange}
+          />
+        )
+      )}
 
       {/* City Picker Modal */}
       <Modal visible={showCityPicker} transparent animationType="slide">
@@ -272,10 +444,22 @@ const styles = StyleSheet.create({
   form: { padding: 20, paddingBottom: 40 },
   formGroup: { marginBottom: 20 },
   label: { color: "#FFFFFF", fontSize: 14, fontWeight: "700", marginBottom: 8 },
+  required: { color: "#FF4444" },
+  requiredHint: { color: "#FF4444", fontSize: 12, marginTop: 6 },
   textInput: { backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: "#FFFFFF", fontSize: 16, borderWidth: 1, borderColor: "#2A2A2A" },
   selectBtn: { backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderWidth: 1, borderColor: "#2A2A2A" },
   selectText: { color: "#FFFFFF", fontSize: 16 },
   selectPlaceholder: { color: "#555", fontSize: 16 },
+  // Date/time
+  dateTimeRow: { flexDirection: "row", gap: 10 },
+  dateBtn: { flex: 2, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, borderWidth: 1, borderColor: "#39FF14" },
+  timeBtn: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14, borderWidth: 1, borderColor: "#39FF14" },
+  dateBtnEmpty: { borderColor: "#2A2A2A" },
+  dateText: { color: "#FFFFFF", fontSize: 14, fontWeight: "600", flexShrink: 1 },
+  datePlaceholder: { color: "#555", fontSize: 14 },
+  confirmBtn: { backgroundColor: "#39FF14", borderRadius: 12, paddingVertical: 14, alignItems: "center", marginTop: 16 },
+  confirmBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 16 },
+  // Type
   typeRow: { flexDirection: "row", gap: 10 },
   typeBtn: { flex: 1, backgroundColor: "#1A1A1A", borderRadius: 12, padding: 16, alignItems: "center", borderWidth: 1, borderColor: "#2A2A2A" },
   typeBtnActive: { borderColor: "#39FF14", backgroundColor: "rgba(57,255,20,0.1)" },
@@ -303,7 +487,7 @@ const styles = StyleSheet.create({
   teamResultCity: { color: "#8A8A8A", fontSize: 12, marginTop: 2 },
   // Modals
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
-  modalContent: { backgroundColor: "#1A1A1A", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "70%", padding: 20 },
+  modalContent: { backgroundColor: "#1A1A1A", borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: "80%", padding: 20 },
   modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   modalTitle: { color: "#FFFFFF", fontSize: 20, fontWeight: "800" },
   cityItem: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, marginBottom: 4 },

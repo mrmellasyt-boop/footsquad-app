@@ -101,3 +101,13 @@
 - [x] Frontend: match/[id].tsx shows 'Invitation sent' banner for creator waiting
 - [x] Frontend: match/[id].tsx shows Pending Invitations section for friendly creator
 - [x] Frontend: invited team captain sees Accept/Decline card (18 tests passed)
+
+## Fix Date/Time Input + Expired Matches
+
+- [x] Install @react-native-community/datetimepicker
+- [x] create-match.tsx: replace text input with native date picker
+- [x] create-match.tsx: replace text input with native time picker
+- [x] create-match.tsx: date+time required validation (prevent submit if missing)
+- [x] Backend: getPublicMatches filters out expired matches (matchDate < now)
+- [x] Backend: getUpcomingMatches already filters expired (gte matchDate)
+- [x] Backend: getPlayerMatches excludes cancelled matches, keeps completed ones
