@@ -33,6 +33,7 @@ function getNotifIcon(type: string): string {
     case "follow": return "person.2.fill";
     case "highlight_like": return "heart.fill";
     case "challenge_accepted": return "bolt.fill";
+    case "match_confirmed": return "sportscourt.fill";
     default: return "bell.fill";
   }
 }
@@ -60,6 +61,7 @@ function getNotifColor(type: string): string {
     case "highlight_like":
       return "#FF6B6B";
     case "challenge_accepted":
+    case "match_confirmed":
       return "#39FF14";
     default:
       return "#39FF14";
@@ -72,8 +74,8 @@ function navigateFromNotif(router: ReturnType<typeof useRouter>, notif: any) {
     const type = notif.type as string;
 
     // Match-related notifications
-    if (["match_invite", "match_accepted", "match_declined", "join_request", "join_approved",
-         "join_declined", "play_request", "play_accepted", "play_declined",
+    if (["match_invite", "match_accepted", "match_declined", "match_confirmed", "join_request", "join_approved",
+         "join_declined", "play_request", "play_accepted", "play_declined", "play_request_accepted",
          "score_request", "score_confirmed", "score_conflict", "score_null",
          "motm_winner", "rating_open"].includes(type)) {
       if (data.matchId) {

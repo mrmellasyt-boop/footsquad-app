@@ -483,13 +483,13 @@ export const appRouter = router({
           const teamBMembers = await db.getTeamMembers(accepted.teamId);
           const allMembers = [...teamAMembers, ...teamBMembers];
           for (const member of allMembers) {
-            if (!member.userId) continue;
-            if (member.userId === ctx.user.id) continue; // skip creator captain (already knows)
+            if (!member.id) continue;
+            if (member.id === player.id) continue; // skip creator captain (already knows)
             if (member.id === acceptedTeam.captainId) continue; // skip accepted captain (already notified)
             if (alreadyInRosterIds.has(member.id)) continue; // skip players already in the match
             await db.createNotification(
-              member.userId,
-              "join_request",
+              member.id,
+              "match_confirmed",
               "Match Confirmed - Join Now! ⚽",
               `Your team has a confirmed match on ${new Date(match?.matchDate ?? Date.now()).toLocaleDateString()}. Tap to join the roster!`,
               JSON.stringify({ matchId: input.matchId })
@@ -592,15 +592,15 @@ export const appRouter = router({
       const teamBMembers = player.teamId != null ? await db.getTeamMembers(player.teamId as number) : [];
       const allMembers = [...teamAMembers, ...teamBMembers];
       for (const member of allMembers) {
-        if (!member.userId) continue;
+        if (!member.id) continue;
         // Skip captains (they already know)
-        if (member.userId === ctx.user.id) continue;
+        if (member.id === player.id) continue;
         if (member.id === creatorTeam?.captainId) continue;
         // Skip players already in the match roster
         if (alreadyInIds.has(member.id)) continue;
         await db.createNotification(
-          member.userId,
-          "join_request",
+          member.id,
+          "match_confirmed",
           "Match Confirmed - Join Now! ⚽",
           `Your team has a confirmed friendly match on ${new Date(match.matchDate).toLocaleDateString()}. Tap to join the roster!`,
           JSON.stringify({ matchId: input.matchId })
@@ -1080,6 +1080,20 @@ export const appRouter = router({
           "challenge_accepted",
           "Challenge Accepted!",
           `${captain.fullName}'s team accepted your challenge! A match has been created.`,
+          JSON.stringify({ matchId })
+        );
+      }
+      // Notify all members of both teams (except the 2 captains already notified)
+      const captainIds = new Set([challengerCaptain?.id, captain.id].filter(Boolean));
+      const teamAMembers = await db.getTeamMembers(challenge.teamId);
+      const teamBMembers = await db.getTeamMembers(captain.teamId);
+      for (const member of [...teamAMembers, ...teamBMembers]) {
+        if (!member.id || captainIds.has(member.id)) continue;
+        await db.createNotification(
+          member.id,
+          "match_confirmed",
+          "Match Confirmed - Join Now! ⚽",
+          `Your team has a confirmed match in ${challenge.city}. Tap to join the roster!`,
           JSON.stringify({ matchId })
         );
       }
