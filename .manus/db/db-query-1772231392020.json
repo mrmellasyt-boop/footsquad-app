@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Supprimer les match_players orphelins (matchId ou playerId invalide)\nDELETE FROM match_players \nWHERE matchId NOT IN (SELECT id FROM matches)\n   OR playerId NOT IN (SELECT id FROM players);\n\n-- Supprimer les ratings orphelins\nDELETE FROM ratings \nWHERE matchId NOT IN (SELECT id FROM matches)\n   OR raterId NOT IN (SELECT id FROM players)\n   OR ratedPlayerId NOT IN (SELECT id FROM players);\n\n-- Supprimer les notifications orphelines (playerId invalide)\nDELETE FROM notifications \nWHERE playerId NOT IN (SELECT id FROM players);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nFQKwthWdG3fpb.root --database Y4PCeNWNUZAwiWRqW9iqRW --execute \n-- Supprimer les match_players orphelins (matchId ou playerId invalide)\nDELETE FROM match_players \nWHERE matchId NOT IN (SELECT id FROM matches)\n   OR playerId NOT IN (SELECT id FROM players);\n\n-- Supprimer les ratings orphelins\nDELETE FROM ratings \nWHERE matchId NOT IN (SELECT id FROM matches)\n   OR raterId NOT IN (SELECT id FROM players)\n   OR ratedPlayerId NOT IN (SELECT id FROM players);\n\n-- Supprimer les notifications orphelines (playerId invalide)\nDELETE FROM notifications \nWHERE playerId NOT IN (SELECT id FROM players);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 151
+}

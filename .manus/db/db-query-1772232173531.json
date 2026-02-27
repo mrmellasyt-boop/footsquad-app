@@ -1,0 +1,75 @@
+{
+  "query": "\nSELECT n.id, n.playerId, n.type FROM notifications n\nWHERE n.playerId NOT IN (SELECT id FROM players)\nLIMIT 20;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nFQKwthWdG3fpb.root --database Y4PCeNWNUZAwiWRqW9iqRW --execute \nSELECT n.id, n.playerId, n.type FROM notifications n\nWHERE n.playerId NOT IN (SELECT id FROM players)\nLIMIT 20;\n",
+  "rows": [
+    {
+      "id": "210058",
+      "playerId": "300037",
+      "type": "join_request"
+    },
+    {
+      "id": "210059",
+      "playerId": "300042",
+      "type": "match_request"
+    },
+    {
+      "id": "210060",
+      "playerId": "300039",
+      "type": "motm"
+    },
+    {
+      "id": "210061",
+      "playerId": "300037",
+      "type": "rating"
+    },
+    {
+      "id": "210062",
+      "playerId": "300039",
+      "type": "follow"
+    },
+    {
+      "id": "210063",
+      "playerId": "300042",
+      "type": "follow"
+    },
+    {
+      "id": "210064",
+      "playerId": "300037",
+      "type": "match_confirmed"
+    },
+    {
+      "id": "210065",
+      "playerId": "300042",
+      "type": "match_confirmed"
+    },
+    {
+      "id": "210066",
+      "playerId": "300039",
+      "type": "highlight_like"
+    },
+    {
+      "id": "210067",
+      "playerId": "300037",
+      "type": "message"
+    },
+    {
+      "id": "210068",
+      "playerId": "300042",
+      "type": "message"
+    },
+    {
+      "id": "210069",
+      "playerId": "300039",
+      "type": "points"
+    },
+    {
+      "id": "210070",
+      "playerId": "300037",
+      "type": "points"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tplayerId\ttype\n210058\t300037\tjoin_request\n210059\t300042\tmatch_request\n210060\t300039\tmotm\n210061\t300037\trating\n210062\t300039\tfollow\n210063\t300042\tfollow\n210064\t300037\tmatch_confirmed\n210065\t300042\tmatch_confirmed\n210066\t300039\thighlight_like\n210067\t300037\tmessage\n210068\t300042\tmessage\n210069\t300039\tpoints\n210070\t300037\tpoints\n",
+  "stderr": "",
+  "execution_time_ms": 54
+}

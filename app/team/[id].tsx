@@ -62,11 +62,11 @@ export default function TeamDetailScreen() {
   );
   const utils = trpc.useUtils();
 
+  const [joinRequestSent, setJoinRequestSent] = useState(false);
   const joinMutation = trpc.team.join.useMutation({
     onSuccess: () => {
-      refetchTeam();
-      refetchMe();
-      utils.player.me.invalidate();
+      setJoinRequestSent(true);
+      Alert.alert("Request Sent ✅", "Your join request has been sent to the captain. You will be notified when they respond.");
     },
     onError: (err) => Alert.alert("Error", err.message),
   });
@@ -229,14 +229,21 @@ export default function TeamDetailScreen() {
 
             {/* ─── ACTION BUTTONS ─── */}
             {canJoin && (
-              <TouchableOpacity
-                style={styles.joinBtn}
-                onPress={() => joinMutation.mutate({ teamId })}
-                disabled={joinMutation.isPending}
-              >
-                <IconSymbol name="person.badge.plus" size={18} color="#0A0A0A" />
-                <Text style={styles.joinBtnText}>{joinMutation.isPending ? "Joining..." : "Join Team"}</Text>
-              </TouchableOpacity>
+              joinRequestSent ? (
+                <View style={[styles.joinBtn, { backgroundColor: "#1A2A1A", borderWidth: 1, borderColor: "#39FF14" }]}>
+                  <IconSymbol name="checkmark.circle.fill" size={18} color="#39FF14" />
+                  <Text style={[styles.joinBtnText, { color: "#39FF14" }]}>Request Sent - Awaiting Captain</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.joinBtn}
+                  onPress={() => joinMutation.mutate({ teamId })}
+                  disabled={joinMutation.isPending}
+                >
+                  <IconSymbol name="person.badge.plus" size={18} color="#0A0A0A" />
+                  <Text style={styles.joinBtnText}>{joinMutation.isPending ? "Sending Request..." : "Join Team"}</Text>
+                </TouchableOpacity>
+              )
             )}
 
             {isCaptain && (

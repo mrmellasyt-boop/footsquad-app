@@ -14,6 +14,10 @@ function getNotifIcon(type: string): string {
     case "match_invite": return "envelope.fill";
     case "match_accepted": return "checkmark.circle.fill";
     case "match_declined": return "xmark.circle.fill";
+    case "team_join_request": return "person.badge.plus";
+    case "team_join_approved": return "checkmark.seal.fill";
+    case "team_join_declined": return "xmark.circle.fill";
+    case "team_join_pending": return "clock.fill";
     case "join_request": return "person.badge.plus";
     case "join_approved": return "checkmark.seal.fill";
     case "join_declined": return "xmark.circle.fill";
@@ -40,6 +44,9 @@ function getNotifColor(type: string): string {
     case "play_accepted":
     case "score_confirmed":
     case "match_invite":
+    case "team_join_request":
+    case "team_join_approved":
+    case "team_join_pending":
       return "#39FF14";
     case "match_declined":
     case "join_declined":
@@ -92,6 +99,12 @@ function navigateFromNotif(router: ReturnType<typeof useRouter>, notif: any) {
       router.push(`/player/${data.followerId}` as any);
       return;
     }
+
+    // Team join-related
+    if ((type === "team_join_request" || type === "team_join_approved" || type === "team_join_declined" || type === "team_join_pending") && data.teamId) {
+      router.push(`/team/${data.teamId}` as any);
+      return;
+    }
   } catch {
     // No navigation if data is malformed
   }
@@ -100,11 +113,13 @@ function navigateFromNotif(router: ReturnType<typeof useRouter>, notif: any) {
 // Determine which action buttons to show inline for a notification type
 function getInlineActions(type: string): { accept: boolean; decline: boolean } {
   switch (type) {
-    case "match_invite":    // Friendly match invitation → Accept / Decline
+    case "match_invite":       // Friendly match invitation → Accept / Decline
       return { accept: true, decline: true };
-    case "play_request":    // Public challenge request → Accept / Decline (captain of match creator)
+    case "play_request":       // Public challenge request → Accept / Decline
       return { accept: true, decline: true };
-    case "join_request":    // Player wants to join match roster → Approve / Decline
+    case "join_request":       // Player wants to join match roster → Approve / Decline
+      return { accept: true, decline: true };
+    case "team_join_request":  // Player wants to join team → Approve / Decline
       return { accept: true, decline: true };
     default:
       return { accept: false, decline: false };
@@ -119,8 +134,8 @@ function NotifCard({
   isActing,
 }: {
   item: any;
-  onAccept?: (data: { matchId?: number; requestId?: number; playerId?: number }) => void;
-  onDecline?: (data: { matchId?: number; requestId?: number; playerId?: number }) => void;
+  onAccept?: (data: { matchId?: number; requestId?: number; playerId?: number; teamId?: number }) => void;
+  onDecline?: (data: { matchId?: number; requestId?: number; playerId?: number; teamId?: number }) => void;
   onPress: () => void;
   isActing?: boolean;
 }) {
@@ -134,8 +149,8 @@ function NotifCard({
   const matchId: number | undefined = parsedData.matchId ?? undefined;
   const requestId: number | undefined = parsedData.requestId ?? undefined;
   const playerId: number | undefined = parsedData.playerId ?? undefined;
-
-  const hasNavigation = !!(matchId || parsedData.highlightId || parsedData.followerId);
+  const teamId: number | undefined = parsedData.teamId ?? undefined;
+  const hasNavigation = !!(matchId || teamId || parsedData.highlightId || parsedData.followerId);
   const showActions = (actions.accept || actions.decline) && !isActing;
 
   return (
@@ -170,7 +185,7 @@ function NotifCard({
                 style={styles.acceptBtn}
                 onPress={(e) => {
                   e.stopPropagation?.();
-                  onAccept({ matchId, requestId, playerId });
+                  onAccept({ matchId, requestId, playerId, teamId });
                 }}
               >
                 <IconSymbol name="checkmark.circle.fill" size={14} color="#0A0A0A" />
@@ -182,7 +197,7 @@ function NotifCard({
                 style={styles.declineBtn}
                 onPress={(e) => {
                   e.stopPropagation?.();
-                  onDecline({ matchId, requestId, playerId });
+                  onDecline({ matchId, requestId, playerId, teamId });
                 }}
               >
                 <IconSymbol name="xmark.circle.fill" size={14} color="#FF4444" />
@@ -260,6 +275,22 @@ export default function NotificationsScreen() {
     onError: (err) => Alert.alert("Error", err.message),
   });
 
+  const approveTeamJoinMutation = trpc.team.approveTeamJoin.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const declineTeamJoinMutation = trpc.team.declineTeamJoin.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
   // ── Decline mutations ──
   const declineInvitationMutation = trpc.match.declineInvitation.useMutation({
     onSuccess: () => {
@@ -321,7 +352,7 @@ export default function NotificationsScreen() {
     navigateFromNotif(router, item);
   };
 
-  const handleAccept = (notif: any, data: { matchId?: number; requestId?: number; playerId?: number }) => {
+   const handleAccept = (notif: any, data: { matchId?: number; requestId?: number; playerId?: number; teamId?: number }) => {
     setActingNotifId(notif.id);
     const done = () => setActingNotifId(null);
     if (notif.type === "match_invite" && data.matchId) {
@@ -330,12 +361,13 @@ export default function NotificationsScreen() {
       acceptRequestMutation.mutate({ requestId: data.requestId, matchId: data.matchId }, { onSettled: done });
     } else if (notif.type === "join_request" && data.matchId && data.playerId) {
       approveJoinMutation.mutate({ matchId: data.matchId, playerId: data.playerId }, { onSettled: done });
+    } else if (notif.type === "team_join_request" && data.playerId && data.teamId) {
+      approveTeamJoinMutation.mutate({ playerId: data.playerId, teamId: data.teamId }, { onSettled: done });
     } else {
       done();
     }
   };
-
-  const handleDecline = (notif: any, data: { matchId?: number; requestId?: number; playerId?: number }) => {
+  const handleDecline = (notif: any, data: { matchId?: number; requestId?: number; playerId?: number; teamId?: number }) => {
     setActingNotifId(notif.id);
     const done = () => setActingNotifId(null);
     if (notif.type === "match_invite" && data.matchId) {
@@ -344,6 +376,8 @@ export default function NotificationsScreen() {
       declineRequestMutation.mutate({ requestId: data.requestId }, { onSettled: done });
     } else if (notif.type === "join_request" && data.matchId && data.playerId) {
       declineJoinMutation.mutate({ matchId: data.matchId, playerId: data.playerId }, { onSettled: done });
+    } else if (notif.type === "team_join_request" && data.playerId && data.teamId) {
+      declineTeamJoinMutation.mutate({ playerId: data.playerId, teamId: data.teamId }, { onSettled: done });
     } else {
       done();
     }

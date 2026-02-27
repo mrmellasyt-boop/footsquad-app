@@ -316,3 +316,12 @@
 - [x] Bouton "Decline" inline dans NotifCard pour match_invite (friendly)
 - [x] Bouton "Decline" inline dans NotifCard pour play_request (public match challenge)
 - [x] Bouton "Decline" inline dans NotifCard pour join_request (joueur veut rejoindre le match)
+
+## Bugs notifications / join team / join match (27 Feb 2026)
+
+- [ ] Fix View notification join team → navigation vers la page de l'équipe
+- [ ] Fix Accept notification join team → retire la notification après action
+- [ ] Fix Decline join team → retirer le joueur de l'équipe (actuellement il reste)
+- [ ] Fix Join team → joueur doit attendre confirmation capitaine (statut pending, pas direct)
+- [ ] Fix notification join match → envoyer uniquement aux joueurs qui ne sont PAS encore dans l'équipe A (pas aux membres déjà dans l'équipe)
+- [ ] Fix double invitation capitaines → seul le capitaine de l'équipe du joueur qui joint doit recevoir l'invitation

@@ -114,18 +114,58 @@ export const appRouter = router({
       if (player.teamId) throw new Error("Already in a team");
       const targetTeam = await db.getTeamById(input.teamId);
       if (!targetTeam) throw new Error("Team not found");
-      // Add player to team immediately (captain can remove later)
-      await db.updatePlayer(player.id, { teamId: input.teamId, isFreeAgent: false });
-      // Notify ONLY the captain of the target team
+      // Do NOT add player to team immediately — send a join request to the captain
+      // Notify ONLY the captain of the target team with approve/decline actions
       if (targetTeam.captainId) {
         await db.createNotification(
           targetTeam.captainId,
-          "join_request",
-          "New Player Joined! ⚽",
-          `${player.fullName} has joined your team ${targetTeam.name}. You can remove them from the team page if needed.`,
+          "team_join_request",
+          `Join Request: ${player.fullName} ⚽`,
+          `${player.fullName} wants to join your team ${targetTeam.name}. Accept or decline their request.`,
           JSON.stringify({ playerId: player.id, teamId: input.teamId })
         );
       }
+      // Notify the player that their request was sent
+      await db.createNotification(
+        player.id,
+        "team_join_pending",
+        "Join Request Sent ✅",
+        `Your request to join ${targetTeam.name} has been sent. Waiting for captain approval.`,
+        JSON.stringify({ teamId: input.teamId })
+      );
+      return { success: true, status: "pending" };
+    }),
+    approveTeamJoin: protectedProcedure.input(z.object({ playerId: z.number(), teamId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || captain.teamId !== input.teamId) throw new Error("Only the team captain can approve join requests");
+      const target = await db.getPlayerById(input.playerId);
+      if (!target) throw new Error("Player not found");
+      if (target.teamId) throw new Error("Player already in a team");
+      // Add player to team
+      await db.updatePlayer(input.playerId, { teamId: input.teamId, isFreeAgent: false });
+      // Notify the player
+      const team = await db.getTeamById(input.teamId);
+      await db.createNotification(
+        input.playerId,
+        "team_join_approved",
+        "Join Request Approved! 🎉",
+        `You have been accepted into ${team?.name ?? "the team"}. Welcome to the squad!`,
+        JSON.stringify({ teamId: input.teamId })
+      );
+      return { success: true };
+    }),
+    declineTeamJoin: protectedProcedure.input(z.object({ playerId: z.number(), teamId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || captain.teamId !== input.teamId) throw new Error("Only the team captain can decline join requests");
+      // Do NOT add to team — just notify the player
+      const team = await db.getTeamById(input.teamId);
+      await db.createNotification(
+        input.playerId,
+        "team_join_declined",
+        "Join Request Declined",
+        `Your request to join ${team?.name ?? "the team"} was declined by the captain.`,
+        JSON.stringify({ teamId: input.teamId })
+      );
       return { success: true };
     }),
     leave: protectedProcedure.mutation(async ({ ctx }) => {
@@ -436,14 +476,17 @@ export const appRouter = router({
             `${creatorTeam?.name ?? "The team"} accepted your challenge request. Match is confirmed!`,
             JSON.stringify({ matchId: input.matchId })
           );
-          // Notify ALL players of BOTH teams to join the match
+          // Notify players NOT already in the match roster
+          const alreadyInRoster = await db.getMatchPlayers(input.matchId);
+          const alreadyInRosterIds = new Set(alreadyInRoster.map((mp: any) => mp.playerId));
           const teamAMembers = match?.teamAId ? await db.getTeamMembers(match.teamAId) : [];
           const teamBMembers = await db.getTeamMembers(accepted.teamId);
           const allMembers = [...teamAMembers, ...teamBMembers];
           for (const member of allMembers) {
             if (!member.userId) continue;
             if (member.userId === ctx.user.id) continue; // skip creator captain (already knows)
-            if (member.userId === acceptedTeam.captainId) continue; // skip accepted captain (already notified)
+            if (member.id === acceptedTeam.captainId) continue; // skip accepted captain (already notified)
+            if (alreadyInRosterIds.has(member.id)) continue; // skip players already in the match
             await db.createNotification(
               member.userId,
               "join_request",
@@ -542,7 +585,9 @@ export const appRouter = router({
           JSON.stringify({ matchId: input.matchId })
         );
       }
-      // Notify ALL players of BOTH teams to join the match
+      // Notify players NOT already in the match roster
+      const alreadyInMatch = await db.getMatchPlayers(input.matchId);
+      const alreadyInIds = new Set(alreadyInMatch.map((mp: any) => mp.playerId));
       const teamAMembers = teamAId != null ? await db.getTeamMembers(teamAId as number) : [];
       const teamBMembers = player.teamId != null ? await db.getTeamMembers(player.teamId as number) : [];
       const allMembers = [...teamAMembers, ...teamBMembers];
@@ -550,7 +595,9 @@ export const appRouter = router({
         if (!member.userId) continue;
         // Skip captains (they already know)
         if (member.userId === ctx.user.id) continue;
-        if (member.userId === creatorTeam?.captainId) continue;
+        if (member.id === creatorTeam?.captainId) continue;
+        // Skip players already in the match roster
+        if (alreadyInIds.has(member.id)) continue;
         await db.createNotification(
           member.userId,
           "join_request",
