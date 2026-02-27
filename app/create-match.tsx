@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert, ActivityIndicator, Platform } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert, ActivityIndicator, Platform, KeyboardAvoidingView } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
@@ -390,6 +390,7 @@ export default function CreateMatchScreen() {
 
       {/* Team Search Modal */}
       <Modal visible={showTeamSearch} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -432,6 +433,7 @@ export default function CreateMatchScreen() {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenContainer>
   );

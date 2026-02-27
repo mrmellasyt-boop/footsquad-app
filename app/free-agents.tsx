@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, ScrollView, TextInput, Alert } from "react-native";
+import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, Modal, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
@@ -177,6 +177,7 @@ export default function FreeAgentsScreen() {
 
       {/* Create Availability Post Modal */}
       <Modal visible={showCreatePost} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={styles.modalOverlay}>
           <View style={styles.createModalContent}>
             <View style={styles.modalHeader}>
@@ -295,6 +296,7 @@ export default function FreeAgentsScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenContainer>
   );

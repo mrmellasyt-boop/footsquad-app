@@ -395,7 +395,13 @@ function ProfileView() {
             </View>
 
             {/* Logout */}
-            <TouchableOpacity style={styles.logoutBtn} onPress={logout}>
+            <TouchableOpacity
+              style={styles.logoutBtn}
+              onPress={async () => {
+                await logout();
+                router.replace("/login" as any);
+              }}
+            >
               <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
           </View>

@@ -77,6 +77,9 @@ export const appRouter = router({
     freeAgents: publicProcedure.input(z.object({ city: z.string().optional() })).query(async ({ input }) => {
       return db.getFreeAgents(input.city);
     }),
+    search: publicProcedure.input(z.object({ query: z.string().min(1) })).query(async ({ input }) => {
+      return db.searchPlayers(input.query);
+    }),
     leaderboard: publicProcedure.input(z.object({ city: z.string().optional() })).query(async ({ input }) => {
       return db.getLeaderboard(input.city);
     }),

@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte, ne, sql, inArray, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, ne, sql, inArray, isNotNull, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -115,6 +115,15 @@ export async function getFreeAgents(city?: string) {
   const conditions = [eq(players.isFreeAgent, true), eq(players.isAvailable, true)];
   if (city) conditions.push(eq(players.city, city));
   return db.select().from(players).where(and(...conditions));
+}
+
+export async function searchPlayers(query: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const q = `%${query}%`;
+  return db.select().from(players)
+    .where(or(like(players.fullName, q), like(players.city, q)))
+    .limit(20);
 }
 
 export async function getLeaderboard(city?: string) {

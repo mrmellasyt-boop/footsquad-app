@@ -111,3 +111,13 @@
 - [x] Backend: getPublicMatches filters out expired matches (matchDate < now)
 - [x] Backend: getUpcomingMatches already filters expired (gte matchDate)
 - [x] Backend: getPlayerMatches excludes cancelled matches, keeps completed ones
+
+## Fix Signout + Keyboard + Player Search
+
+- [x] Signout button calls logout() + router.replace('/login') in profile.tsx
+- [x] KeyboardAvoidingView in login/signup screen
+- [x] KeyboardAvoidingView in chat screen (DM and team chat)
+- [x] KeyboardAvoidingView in free-agents modal form
+- [x] KeyboardAvoidingView in team search modal (create-match)
+- [x] Add Player in team/[id].tsx: uses player.search with LIKE query (min 2 chars)
+- [x] Add Player: player.search route added to backend with db.searchPlayers (21 tests passed)

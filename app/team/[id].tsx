@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, Modal, TextInput, ScrollView, Alert } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList, Modal, TextInput, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/hooks/use-auth";
@@ -27,7 +27,10 @@ export default function TeamDetailScreen() {
   // Add player modal
   const [showAddPlayer, setShowAddPlayer] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: freeAgents } = trpc.player.freeAgents.useQuery({}, { enabled: showAddPlayer });
+  const { data: searchResults, isFetching: isSearching } = trpc.player.search.useQuery(
+    { query: searchQuery },
+    { enabled: showAddPlayer && searchQuery.length >= 2 }
+  );
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const isCaptain = myPlayer?.isCaptain && myPlayer?.teamId === teamId;
@@ -68,9 +71,7 @@ export default function TeamDetailScreen() {
     ]);
   };
 
-  const filteredAgents = (freeAgents ?? []).filter((a: any) =>
-    !searchQuery || a.fullName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredAgents = searchQuery.length >= 2 ? (searchResults ?? []) : [];
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
@@ -159,6 +160,7 @@ export default function TeamDetailScreen() {
 
       {/* Add Player Modal */}
       <Modal visible={showAddPlayer} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -169,14 +171,22 @@ export default function TeamDetailScreen() {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search free agents..."
+              placeholder="Search player by name or city..."
               placeholderTextColor="#555"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              autoFocus
+              returnKeyType="search"
             />
+            {searchQuery.length < 2 && (
+              <Text style={styles.noResults}>Type at least 2 characters to search</Text>
+            )}
+            {isSearching && searchQuery.length >= 2 && (
+              <ActivityIndicator color="#39FF14" style={{ marginTop: 16 }} />
+            )}
             <ScrollView style={styles.playerList}>
-              {filteredAgents.length === 0 ? (
-                <Text style={styles.noResults}>No free agents found</Text>
+              {searchQuery.length >= 2 && !isSearching && filteredAgents.length === 0 ? (
+                <Text style={styles.noResults}>No players found</Text>
               ) : (
                 filteredAgents.map((agent: any) => (
                   <View key={agent.id} style={styles.agentRow}>
@@ -200,6 +210,7 @@ export default function TeamDetailScreen() {
             </ScrollView>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenContainer>
   );
