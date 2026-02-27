@@ -121,3 +121,24 @@
 - [x] KeyboardAvoidingView in team search modal (create-match)
 - [x] Add Player in team/[id].tsx: uses player.search with LIKE query (min 2 chars)
 - [x] Add Player: player.search route added to backend with db.searchPlayers (21 tests passed)
+
+## NPC Seed Data + Integration Tests
+
+- [ ] Read schema and db.ts to understand all table structures
+- [ ] Create seed script with 10 NPC players, 2 teams, 3 matches (confirmed, pending, completed)
+- [ ] Seed: team chat messages, direct messages
+- [ ] Seed: highlights with likes
+- [ ] Seed: follow relationships
+- [ ] Seed: MOTM votes and ratings
+- [ ] Seed: match invitations (friendly + public request)
+- [ ] Seed: notifications for each event type
+- [ ] Seed: points and ratings calculated correctly
+- [ ] Run seed script and verify data in DB
+- [ ] Integration tests: notifications system
+- [ ] Integration tests: messages (team chat + DM)
+- [ ] Integration tests: highlights form + like count
+- [ ] Integration tests: follow button
+- [ ] Integration tests: MOTM voting
+- [ ] Integration tests: match invitations
+- [ ] Integration tests: points and rating calculation
+- [ ] Full system test report
