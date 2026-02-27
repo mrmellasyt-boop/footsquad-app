@@ -274,6 +274,7 @@ export default function CreateMatchScreen() {
             onChangeText={setMaxPlayers}
             keyboardType="number-pad"
           />
+          <Text style={styles.fieldHint}>👥 Ce nombre s'applique par équipe (ex: 5 = 5 vs 5)</Text>
         </View>
 
         <TouchableOpacity
@@ -495,4 +496,5 @@ const styles = StyleSheet.create({
   cityText: { color: "#FFFFFF", fontSize: 16 },
   cityTextActive: { color: "#39FF14", fontWeight: "700" },
   typeHint: { color: "#8A8A8A", fontSize: 12, marginTop: 8, lineHeight: 18 },
+  fieldHint: { color: "#8A8A8A", fontSize: 12, marginTop: 6, lineHeight: 18 },
 });
