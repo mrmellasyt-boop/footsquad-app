@@ -53,3 +53,12 @@
 - [x] Fix frontend: use logoUrl in Match Detail screen
 - [x] Fix frontend: use logoUrl in Team Page
 - [x] Proper fallback only when logoUrl is missing/null
+
+## Fix Package 3: Free Agent Board - Create Post
+
+- [x] Add 'note' field to players schema
+- [x] Add/update API route to set availability post (city, position, availableTime, preferredFormat, note)
+- [x] Free Agent Board: "Create Availability Post" button (visible when authenticated)
+- [x] Create Post modal form (city, position, available time, preferred format, optional note)
+- [x] Post appears in free agents list with all fields
+- [x] Free agent detail screen with Message and Invite actions

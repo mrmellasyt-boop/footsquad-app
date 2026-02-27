@@ -47,10 +47,31 @@ export const appRouter = router({
       availableTime: z.string().optional(),
       preferredFormat: z.string().optional(),
       isAvailable: z.boolean().optional(),
+      note: z.string().max(500).optional().nullable(),
     })).mutation(async ({ ctx, input }) => {
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) throw new Error("Player not found");
       await db.updatePlayer(player.id, input);
+      return { success: true };
+    }),
+    postAvailability: protectedProcedure.input(z.object({
+      city: z.string().min(1),
+      position: z.enum(["GK", "DEF", "MID", "ATT"]),
+      availableTime: z.string().min(1),
+      preferredFormat: z.string().min(1),
+      note: z.string().max(500).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player) throw new Error("Create player profile first");
+      await db.updatePlayer(player.id, {
+        city: input.city,
+        position: input.position,
+        availableTime: input.availableTime,
+        preferredFormat: input.preferredFormat,
+        isAvailable: true,
+        isFreeAgent: true,
+        note: input.note ?? null,
+      });
       return { success: true };
     }),
     freeAgents: publicProcedure.input(z.object({ city: z.string().optional() })).query(async ({ input }) => {

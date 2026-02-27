@@ -36,6 +36,7 @@ export const players = mysqlTable("players", {
   availableTime: varchar("availableTime", { length: 255 }),
   preferredFormat: varchar("preferredFormat", { length: 20 }),
   isAvailable: boolean("isAvailable").default(false).notNull(),
+  note: text("note"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
