@@ -5,11 +5,13 @@ import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function LeaderboardScreen() {
   const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
   const [showCityPicker, setShowCityPicker] = useState(false);
   const router = useRouter();
+  const t = useT();
 
   const { data: cities } = trpc.ref.cities.useQuery();
   const { data: players, isLoading } = trpc.player.leaderboard.useQuery({ city: selectedCity }, { refetchOnWindowFocus: true });
@@ -17,15 +19,15 @@ export default function LeaderboardScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.title}>Leaderboard</Text>
+        <Text style={styles.title}>{t.leaderboard.title}</Text>
         <TouchableOpacity style={styles.filterBtn} onPress={() => setShowCityPicker(true)}>
           <IconSymbol name="location.fill" size={16} color="#39FF14" />
-          <Text style={styles.filterText}>{selectedCity ?? "All Cities"}</Text>
+          <Text style={styles.filterText}>{selectedCity ?? t.common.allCities}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.minMatchNote}>
-        <Text style={styles.noteText}>Minimum 5 matches required to appear</Text>
+        <Text style={styles.noteText}>{t.leaderboard.noPlayersSub}</Text>
       </View>
 
       {isLoading ? (
@@ -35,8 +37,8 @@ export default function LeaderboardScreen() {
       ) : !players || players.length === 0 ? (
         <View style={styles.center}>
           <IconSymbol name="trophy.fill" size={48} color="#2A2A2A" />
-          <Text style={styles.emptyText}>No players qualify yet</Text>
-          <Text style={styles.emptySubtext}>Play 5+ matches to appear here</Text>
+          <Text style={styles.emptyText}>{t.leaderboard.noPlayers}</Text>
+          <Text style={styles.emptySubtext}>{t.leaderboard.noPlayersSub}</Text>
         </View>
       ) : (
         <FlatList
@@ -67,19 +69,19 @@ export default function LeaderboardScreen() {
                 </View>
                 <View style={styles.statsCol}>
                   <Text style={styles.points}>{item.totalPoints}</Text>
-                  <Text style={styles.statsLabel}>pts</Text>
+                  <Text style={styles.statsLabel}>{t.leaderboard.points}</Text>
                 </View>
                 <View style={styles.statsCol}>
                   <Text style={styles.statsValue}>{item.totalMatches}</Text>
-                  <Text style={styles.statsLabel}>games</Text>
+                  <Text style={styles.statsLabel}>{t.leaderboard.matches}</Text>
                 </View>
                 <View style={styles.statsCol}>
                   <Text style={styles.statsValue}>{avgRating}</Text>
-                  <Text style={styles.statsLabel}>rating</Text>
+                  <Text style={styles.statsLabel}>{t.leaderboard.rating}</Text>
                 </View>
                 <View style={styles.statsCol}>
                   <Text style={styles.motmValue}>{item.motmCount}</Text>
-                  <Text style={styles.statsLabel}>MOTM</Text>
+                  <Text style={styles.statsLabel}>{t.leaderboard.motm}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -91,7 +93,7 @@ export default function LeaderboardScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select City</Text>
+              <Text style={styles.modalTitle}>{t.leaderboard.filterCity}</Text>
               <TouchableOpacity onPress={() => setShowCityPicker(false)}>
                 <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
               </TouchableOpacity>
@@ -101,7 +103,7 @@ export default function LeaderboardScreen() {
                 style={[styles.cityItem, !selectedCity && styles.cityItemActive]}
                 onPress={() => { setSelectedCity(undefined); setShowCityPicker(false); }}
               >
-                <Text style={[styles.cityText, !selectedCity && styles.cityTextActive]}>All Cities</Text>
+                <Text style={[styles.cityText, !selectedCity && styles.cityTextActive]}>{t.common.allCities}</Text>
               </TouchableOpacity>
               {(cities ?? []).map((city) => (
                 <TouchableOpacity

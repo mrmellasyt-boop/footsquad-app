@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 type Tab = "public" | "mine";
 
@@ -13,6 +14,7 @@ export default function MatchesScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("public");
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   const { data: publicMatches, isLoading: loadingPublic } = trpc.match.publicFeed.useQuery(undefined, { refetchOnWindowFocus: true });
   const { data: myMatches, isLoading: loadingMine } = trpc.match.myMatches.useQuery(undefined, {
@@ -26,14 +28,14 @@ export default function MatchesScreen() {
   return (
     <ScreenContainer>
       <View style={styles.header}>
-        <Text style={styles.title}>Matches</Text>
+        <Text style={styles.title}>{t.matches.title}</Text>
         {isAuthenticated && (
           <TouchableOpacity
             style={styles.createBtn}
             onPress={() => router.push("/create-match" as any)}
           >
             <IconSymbol name="plus.circle.fill" size={20} color="#0A0A0A" />
-            <Text style={styles.createBtnText}>Create</Text>
+            <Text style={styles.createBtnText}>{t.matches.createMatch}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -43,14 +45,14 @@ export default function MatchesScreen() {
           style={[styles.tab, activeTab === "public" && styles.tabActive]}
           onPress={() => setActiveTab("public")}
         >
-          <Text style={[styles.tabText, activeTab === "public" && styles.tabTextActive]}>Public Matches</Text>
+          <Text style={[styles.tabText, activeTab === "public" && styles.tabTextActive]}>{t.matches.allMatches}</Text>
         </TouchableOpacity>
         {isAuthenticated && (
           <TouchableOpacity
             style={[styles.tab, activeTab === "mine" && styles.tabActive]}
             onPress={() => setActiveTab("mine")}
           >
-            <Text style={[styles.tabText, activeTab === "mine" && styles.tabTextActive]}>My Matches</Text>
+            <Text style={[styles.tabText, activeTab === "mine" && styles.tabTextActive]}>{t.matches.myMatches}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -62,13 +64,13 @@ export default function MatchesScreen() {
       ) : !currentData || currentData.length === 0 ? (
         <View style={styles.center}>
           <IconSymbol name="sportscourt.fill" size={48} color="#2A2A2A" />
-          <Text style={styles.emptyText}>No matches found</Text>
+          <Text style={styles.emptyText}>{t.matches.noMatches}</Text>
           {isAuthenticated && (
             <TouchableOpacity
               style={styles.emptyBtn}
               onPress={() => router.push("/create-match" as any)}
             >
-              <Text style={styles.emptyBtnText}>Create a Match</Text>
+              <Text style={styles.emptyBtnText}>{t.matches.createMatch}</Text>
             </TouchableOpacity>
           )}
         </View>

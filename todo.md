@@ -209,3 +209,14 @@
 - [x] Frontend : carte équipe (logo, nom, ville, W/D/L, nb joueurs, bouton Consulter)
 - [x] Frontend : carte joueur (photo, nom, position, ville, rating, MOTM, bouton Consulter)
 - [x] Frontend : état vide + état chargement
+
+## Système de Localisation (EN/AR/FR)
+
+- [ ] Créer lib/i18n/translations.ts (EN, AR, FR)
+- [ ] Créer lib/i18n/LanguageContext.tsx (provider + hook useT)
+- [ ] Support RTL pour l'arabe (I18nManager)
+- [ ] Persistance de la langue choisie (AsyncStorage)
+- [ ] Sélecteur de langue dans Profile Settings
+- [ ] Traduire : Home, Matches, Profile, Search, Challenges, Leaderboard
+- [ ] Traduire : Match Detail, Team Detail, Player Detail
+- [ ] Traduire : notifications, modals, alertes

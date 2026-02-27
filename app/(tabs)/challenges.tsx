@@ -10,6 +10,7 @@ import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const FORMATS = ["5v5", "8v8", "11v11"] as const;
 type Format = (typeof FORMATS)[number];
@@ -38,6 +39,7 @@ function ChallengeCard({
   onCancel: (id: number) => void;
 }) {
   const router = useRouter();
+  const t = useT();
   return (
     <View style={styles.card}>
       {/* Team Info */}
@@ -65,7 +67,7 @@ function ChallengeCard({
           </View>
           {isMine && (
             <View style={styles.myBadge}>
-              <Text style={styles.myBadgeText}>MY CHALLENGE</Text>
+              <Text style={styles.myBadgeText}>{t.challenges.myChallenge.toUpperCase()}</Text>
             </View>
           )}
         </View>
@@ -96,7 +98,7 @@ function ChallengeCard({
               onPress={() => onCancel(item.id)}
               activeOpacity={0.7}
             >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
+              <Text style={styles.cancelBtnText}>{t.common.cancel}</Text>
             </TouchableOpacity>
           ) : isCaptain ? (
             <TouchableOpacity
@@ -105,7 +107,7 @@ function ChallengeCard({
               activeOpacity={0.7}
             >
               <IconSymbol name="bolt.fill" size={14} color="#0A0A0A" />
-              <Text style={styles.acceptBtnText}>Accept Challenge</Text>
+              <Text style={styles.acceptBtnText}>{t.challenges.accept}</Text>
             </TouchableOpacity>
           ) : null}
         </View>
@@ -270,6 +272,7 @@ function PostChallengeModal({
 export default function ChallengesScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const t = useT();
   const [filterCity, setFilterCity] = useState<string | undefined>(undefined);
   const [filterFormat, setFilterFormat] = useState<Format | undefined>(undefined);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -340,8 +343,8 @@ export default function ChallengesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Open Challenges</Text>
-          <Text style={styles.subtitle}>Find opponents for your team</Text>
+          <Text style={styles.title}>{t.challenges.title}</Text>
+          <Text style={styles.subtitle}>{t.challenges.subtitle}</Text>
         </View>
         {isAuthenticated && isCaptain && !hasActiveChallenge && (
           <TouchableOpacity
@@ -360,13 +363,13 @@ export default function ChallengesScreen() {
         <View style={styles.myChallengeBanner}>
           <View style={styles.myChallengeBannerLeft}>
             <IconSymbol name="bolt.fill" size={16} color="#39FF14" />
-            <Text style={styles.myChallengeBannerText}>Your challenge is live!</Text>
+            <Text style={styles.myChallengeBannerText}>{t.challenges.challengeLive}</Text>
           </View>
           <TouchableOpacity
             onPress={() => handleCancel(myTeamChallenge.id)}
             style={styles.cancelBannerBtn}
           >
-            <Text style={styles.cancelBannerText}>Cancel</Text>
+              <Text style={styles.cancelBannerText}>{t.common.cancel}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -381,7 +384,7 @@ export default function ChallengesScreen() {
           >
             <IconSymbol name="location.fill" size={12} color={filterCity ? "#0A0A0A" : "#8A8A8A"} />
             <Text style={[styles.filterChipText, filterCity && styles.filterChipTextActive]}>
-              {filterCity ?? "All Cities"}
+              {filterCity ?? t.common.allCities}
             </Text>
           </TouchableOpacity>
 
@@ -402,7 +405,7 @@ export default function ChallengesScreen() {
               style={styles.clearBtn}
               onPress={() => { setFilterCity(undefined); setFilterFormat(undefined); }}
             >
-              <Text style={styles.clearBtnText}>Clear</Text>
+              <Text style={styles.clearBtnText}>{t.common.clear}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -416,15 +419,15 @@ export default function ChallengesScreen() {
       ) : !challenges || challenges.length === 0 ? (
         <View style={styles.empty}>
           <IconSymbol name="bolt.fill" size={56} color="#2A2A2A" />
-          <Text style={styles.emptyTitle}>No open challenges</Text>
+          <Text style={styles.emptyTitle}>{t.challenges.noChallenge}</Text>
           <Text style={styles.emptySubtitle}>
             {isAuthenticated && isCaptain
-              ? "Be the first to post a challenge!"
-              : "Check back later or filter by your city."}
+              ? t.challenges.noChallengeSubtitle
+              : t.challenges.noChallengeSubtitle}
           </Text>
           {isAuthenticated && isCaptain && !hasActiveChallenge && (
             <TouchableOpacity style={styles.emptyBtn} onPress={() => setShowPostModal(true)}>
-              <Text style={styles.emptyBtnText}>Post a Challenge</Text>
+              <Text style={styles.emptyBtnText}>{t.challenges.postChallenge}</Text>
             </TouchableOpacity>
           )}
         </View>

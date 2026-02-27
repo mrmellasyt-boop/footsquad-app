@@ -8,6 +8,7 @@ import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 type Tab = "teams" | "players";
 type Position = "GK" | "DEF" | "MID" | "ATT";
@@ -23,6 +24,7 @@ const positionColor: Record<Position, string> = {
 
 // ─── Team Card ───
 function TeamCard({ item, onPress }: { item: any; onPress: () => void }) {
+  const t = useT();
   const winRate = item.totalMatches > 0
     ? Math.round((item.totalWins / item.totalMatches) * 100)
     : 0;
@@ -64,7 +66,7 @@ function TeamCard({ item, onPress }: { item: any; onPress: () => void }) {
         </View>
       </View>
       <TouchableOpacity style={styles.consultBtn} onPress={onPress} activeOpacity={0.8}>
-        <Text style={styles.consultBtnText}>Consulter</Text>
+        <Text style={styles.consultBtnText}>{t.common.consult}</Text>
         <IconSymbol name="chevron.right" size={14} color="#0A0A0A" />
       </TouchableOpacity>
     </View>
@@ -73,6 +75,7 @@ function TeamCard({ item, onPress }: { item: any; onPress: () => void }) {
 
 // ─── Player Card ───
 function PlayerCard({ item, onPress }: { item: any; onPress: () => void }) {
+  const t = useT();
   const avgRating = item.ratingCount > 0
     ? (item.totalRatings / item.ratingCount).toFixed(1)
     : null;
@@ -121,14 +124,14 @@ function PlayerCard({ item, onPress }: { item: any; onPress: () => void }) {
             )}
             {item.isFreeAgent && (
               <View style={styles.freeAgentBadge}>
-                <Text style={styles.freeAgentText}>Free</Text>
+                <Text style={styles.freeAgentText}>{t.explore.freeAgent}</Text>
               </View>
             )}
           </View>
         </View>
       </View>
       <TouchableOpacity style={styles.consultBtn} onPress={onPress} activeOpacity={0.8}>
-        <Text style={styles.consultBtnText}>Consulter</Text>
+        <Text style={styles.consultBtnText}>{t.common.consult}</Text>
         <IconSymbol name="chevron.right" size={14} color="#0A0A0A" />
       </TouchableOpacity>
     </View>
@@ -137,6 +140,7 @@ function PlayerCard({ item, onPress }: { item: any; onPress: () => void }) {
 
 export default function SearchScreen() {
   const router = useRouter();
+  const t = useT();
   const [activeTab, setActiveTab] = useState<Tab>("teams");
   const [query, setQuery] = useState("");
   const [filterCity, setFilterCity] = useState<string | undefined>(undefined);
@@ -180,8 +184,8 @@ export default function SearchScreen() {
     <ScreenContainer>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Explore</Text>
-        <Text style={styles.subtitle}>Find teams and players</Text>
+        <Text style={styles.title}>{t.explore.title}</Text>
+        <Text style={styles.subtitle}>{t.explore.subtitle}</Text>
       </View>
 
       {/* Search Bar */}
@@ -189,7 +193,7 @@ export default function SearchScreen() {
         <IconSymbol name="magnifyingglass" size={18} color="#8A8A8A" />
         <TextInput
           style={styles.searchInput}
-          placeholder={activeTab === "teams" ? "Search teams..." : "Search players..."}
+          placeholder={activeTab === "teams" ? t.explore.searchTeams : t.explore.searchPlayers}
           placeholderTextColor="#555"
           value={query}
           onChangeText={setQuery}
@@ -210,7 +214,7 @@ export default function SearchScreen() {
           onPress={() => setActiveTab("teams")}
         >
           <IconSymbol name="shield.fill" size={16} color={activeTab === "teams" ? "#0A0A0A" : "#8A8A8A"} />
-          <Text style={[styles.tabText, activeTab === "teams" && styles.tabTextActive]}>Teams</Text>
+          <Text style={[styles.tabText, activeTab === "teams" && styles.tabTextActive]}>{t.explore.teams}</Text>
           {teamsData && (
             <View style={[styles.countBadge, activeTab === "teams" && styles.countBadgeActive]}>
               <Text style={[styles.countText, activeTab === "teams" && styles.countTextActive]}>
@@ -224,7 +228,7 @@ export default function SearchScreen() {
           onPress={() => setActiveTab("players")}
         >
           <IconSymbol name="person.2.fill" size={16} color={activeTab === "players" ? "#0A0A0A" : "#8A8A8A"} />
-          <Text style={[styles.tabText, activeTab === "players" && styles.tabTextActive]}>Players</Text>
+          <Text style={[styles.tabText, activeTab === "players" && styles.tabTextActive]}>{t.explore.players}</Text>
           {playersData && (
             <View style={[styles.countBadge, activeTab === "players" && styles.countBadgeActive]}>
               <Text style={[styles.countText, activeTab === "players" && styles.countTextActive]}>
@@ -245,7 +249,7 @@ export default function SearchScreen() {
           >
             <IconSymbol name="location.fill" size={12} color={filterCity ? "#0A0A0A" : "#8A8A8A"} />
             <Text style={[styles.filterChipText, filterCity && styles.filterChipTextActive]}>
-              {filterCity ?? "All Cities"}
+              {filterCity ?? t.common.allCities}
             </Text>
           </TouchableOpacity>
 
@@ -270,7 +274,7 @@ export default function SearchScreen() {
           {hasFilters && (
             <TouchableOpacity style={styles.clearChip} onPress={handleClearFilters}>
               <IconSymbol name="xmark.circle.fill" size={13} color="#FF4444" />
-              <Text style={styles.clearChipText}>Clear</Text>
+              <Text style={styles.clearChipText}>{t.common.clear}</Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -289,18 +293,18 @@ export default function SearchScreen() {
             color="#2A2A2A"
           />
           <Text style={styles.emptyTitle}>
-            {hasFilters ? "No results found" : activeTab === "teams" ? "No teams yet" : "No players yet"}
+            {hasFilters ? t.common.noResults : activeTab === "teams" ? t.explore.noTeams : t.explore.noPlayers}
           </Text>
           <Text style={styles.emptySubtitle}>
             {hasFilters
-              ? "Try adjusting your filters or search term."
+              ? t.common.noResults
               : activeTab === "teams"
-              ? "Be the first to create a team!"
-              : "Players will appear here once they sign up."}
+              ? t.explore.noTeamsSub
+              : t.explore.noPlayersSub}
           </Text>
           {hasFilters && (
             <TouchableOpacity style={styles.clearBtn} onPress={handleClearFilters}>
-              <Text style={styles.clearBtnText}>Clear Filters</Text>
+              <Text style={styles.clearBtnText}>{t.common.clear}</Text>
             </TouchableOpacity>
           )}
         </View>

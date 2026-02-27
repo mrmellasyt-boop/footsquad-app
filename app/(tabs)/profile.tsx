@@ -8,6 +8,8 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import * as Api from "@/lib/_core/api";
+import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
+import type { Language } from "@/lib/i18n/translations";
 
 function ProfileSetup() {
   const [fullName, setFullName] = useState("");
@@ -140,6 +142,9 @@ function ProfileView() {
   const { logout } = useAuth();
   const router = useRouter();
   const utils = trpc.useUtils();
+  const t = useT();
+  const { language, setLanguage, t: tLang } = useLanguage();
+  const [showLangModal, setShowLangModal] = useState(false);
 
   // Edit profile state
   const [showEdit, setShowEdit] = useState(false);
@@ -394,6 +399,17 @@ function ProfileView() {
               )}
             </View>
 
+            {/* Language Selector */}
+            <TouchableOpacity
+              style={styles.langBtn}
+              onPress={() => setShowLangModal(true)}
+            >
+              <IconSymbol name="flag.fill" size={18} color="#39FF14" />
+              <Text style={styles.langBtnLabel}>{t.profile.language}</Text>
+              <Text style={styles.langBtnValue}>{tLang.languages[language]}</Text>
+              <IconSymbol name="chevron.right" size={16} color="#8A8A8A" />
+            </TouchableOpacity>
+
             {/* Logout */}
             <TouchableOpacity
               style={styles.logoutBtn}
@@ -402,7 +418,7 @@ function ProfileView() {
                 router.replace("/login" as any);
               }}
             >
-              <Text style={styles.logoutText}>Logout</Text>
+              <Text style={styles.logoutText}>{t.profile.logout}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -479,26 +495,55 @@ function ProfileView() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Change Password</Text>
+              <Text style={styles.modalTitle}>{t.profile.changePassword}</Text>
               <TouchableOpacity onPress={() => { setShowPasswordModal(false); setPwdError(""); setCurrentPwd(""); setNewPwd(""); }}>
                 <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
               </TouchableOpacity>
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.label}>Current Password</Text>
-              <TextInput style={styles.textInput} secureTextEntry value={currentPwd} onChangeText={setCurrentPwd} placeholder="Enter current password" placeholderTextColor="#555" />
+              <Text style={styles.label}>{t.profile.currentPassword}</Text>
+              <TextInput style={styles.textInput} secureTextEntry value={currentPwd} onChangeText={setCurrentPwd} placeholder={t.profile.currentPassword} placeholderTextColor="#555" />
             </View>
             <View style={styles.formGroup}>
-              <Text style={styles.label}>New Password</Text>
-              <TextInput style={styles.textInput} secureTextEntry value={newPwd} onChangeText={setNewPwd} placeholder="Enter new password" placeholderTextColor="#555" />
+              <Text style={styles.label}>{t.profile.newPassword}</Text>
+              <TextInput style={styles.textInput} secureTextEntry value={newPwd} onChangeText={setNewPwd} placeholder={t.profile.newPassword} placeholderTextColor="#555" />
             </View>
             {pwdError ? <Text style={styles.errorText}>{pwdError}</Text> : null}
             <TouchableOpacity style={styles.createProfileBtn} onPress={handleChangePassword} disabled={pwdLoading}>
-              <Text style={styles.createProfileBtnText}>{pwdLoading ? "Changing..." : "Change Password"}</Text>
+              <Text style={styles.createProfileBtnText}>{pwdLoading ? t.common.loading : t.profile.changePassword}</Text>
             </TouchableOpacity>
           </View>
         </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* Language Selector Modal */}
+      <Modal visible={showLangModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t.profile.language}</Text>
+              <TouchableOpacity onPress={() => setShowLangModal(false)}>
+                <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
+              </TouchableOpacity>
+            </View>
+            {(["en", "ar", "fr"] as Language[]).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[styles.langOption, language === lang && styles.langOptionActive]}
+                onPress={() => { setLanguage(lang); setShowLangModal(false); }}
+              >
+                <Text style={styles.langOptionFlag}>
+                  {lang === "en" ? "🇬🇧" : lang === "ar" ? "🇲🇦" : "🇫🇷"}
+                </Text>
+                <Text style={[styles.langOptionName, language === lang && styles.langOptionNameActive]}>
+                  {tLang.languages[lang]}
+                </Text>
+                {language === lang && <Text style={styles.langCheckmark}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
       </Modal>
     </>
   );
@@ -608,4 +653,13 @@ const styles = StyleSheet.create({
   pickerItem: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, marginBottom: 4 },
   pickerText: { color: "#FFFFFF", fontSize: 16 },
   pickerTextActive: { color: "#39FF14", fontWeight: "700" },
+  langBtn: { flexDirection: "row", alignItems: "center", gap: 10, marginHorizontal: 20, marginTop: 8, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: "#1A1A1A", borderRadius: 12, borderWidth: 1, borderColor: "#2A2A2A" },
+  langBtnLabel: { color: "#FFFFFF", fontSize: 15, fontWeight: "600", flex: 1 },
+  langBtnValue: { color: "#8A8A8A", fontSize: 14 },
+  langOption: { flexDirection: "row", alignItems: "center", paddingVertical: 14, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: "#2A2A2A" },
+  langOptionActive: { backgroundColor: "rgba(57,255,20,0.08)", borderRadius: 10 },
+  langOptionFlag: { fontSize: 24, marginRight: 12 },
+  langOptionName: { color: "#FFFFFF", fontSize: 16, fontWeight: "600", flex: 1 },
+  langOptionNameActive: { color: "#39FF14" },
+  langCheckmark: { color: "#39FF14", fontSize: 18, fontWeight: "800" },
 });

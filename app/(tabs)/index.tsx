@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 // 9:16 portrait card: width = 55% of screen, height = width * 16/9
@@ -14,6 +15,7 @@ const CARD_HEIGHT = Math.round(CARD_WIDTH * (16 / 9));
 function BestMomentSection() {
   const { data: highlights, isLoading } = trpc.highlight.list.useQuery(undefined, { refetchOnWindowFocus: true });
   const router = useRouter();
+  const t = useT();
 
   if (isLoading) return null;
   const top10 = (highlights ?? []).slice(0, 10);
@@ -23,14 +25,15 @@ function BestMomentSection() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionIcon}>🔥</Text>
-        <Text style={styles.sectionTitle}>Best Moments</Text>
+        <Text style={styles.sectionTitle}>{t.home.highlights}</Text>
         <View style={styles.headerRight}>
           <Text style={styles.badge48h}>48H</Text>
           <TouchableOpacity
             style={styles.seeAllBtn}
             onPress={() => router.push("/highlights" as any)}
           >
-            <Text style={styles.seeAllText}>See All</Text>
+            {/* See All */}
+            <Text style={styles.seeAllText}>{t.home.seeAll}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -92,6 +95,7 @@ function BestMomentSection() {
 function TopPlayersSection() {
   const { data: players, isLoading } = trpc.player.leaderboard.useQuery({}, { refetchOnWindowFocus: true });
   const router = useRouter();
+  const t = useT();
 
   if (isLoading) return null;
   const top10 = (players ?? []).slice(0, 10);
@@ -101,7 +105,7 @@ function TopPlayersSection() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionIcon}>🏆</Text>
-        <Text style={styles.sectionTitle}>Top 10 Players</Text>
+        <Text style={styles.sectionTitle}>{t.leaderboard.title}</Text>
       </View>
       <FlatList
         data={top10}
@@ -141,6 +145,7 @@ function TopPlayersSection() {
 function UpcomingMatchesSection() {
   const { data: matchList, isLoading } = trpc.match.upcoming.useQuery({}, { refetchOnWindowFocus: true });
   const router = useRouter();
+  const t = useT();
 
   if (isLoading) return null;
   if (!matchList || matchList.length === 0) {
@@ -148,10 +153,10 @@ function UpcomingMatchesSection() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionIcon}>📅</Text>
-          <Text style={styles.sectionTitle}>Upcoming Matches</Text>
+          <Text style={styles.sectionTitle}>{t.home.upcomingMatches}</Text>
         </View>
         <View style={styles.emptyCard}>
-          <Text style={styles.emptyText}>No upcoming matches</Text>
+          <Text style={styles.emptyText}>{t.home.noUpcomingMatches}</Text>
         </View>
       </View>
     );
@@ -161,7 +166,7 @@ function UpcomingMatchesSection() {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionIcon}>📅</Text>
-        <Text style={styles.sectionTitle}>Upcoming Matches</Text>
+        <Text style={styles.sectionTitle}>{t.home.upcomingMatches}</Text>
       </View>
       {matchList.slice(0, 5).map((match) => (
         <TouchableOpacity
@@ -222,6 +227,7 @@ function UpcomingMatchesSection() {
 export default function HomeScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const t = useT();
 
   return (
     <ScreenContainer>
@@ -247,12 +253,12 @@ export default function HomeScreen() {
 
             {!isAuthenticated && (
               <View style={styles.loginBanner}>
-                <Text style={styles.loginBannerText}>Sign in to join matches and build your reputation</Text>
+                <Text style={styles.loginBannerText}>{t.home.subtitle}</Text>
                 <TouchableOpacity
                   style={styles.loginBtn}
                   onPress={() => router.push("/login" as any)}
                 >
-                  <Text style={styles.loginBtnText}>Login</Text>
+                  <Text style={styles.loginBtnText}>{t.profile.title}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -266,14 +272,15 @@ export default function HomeScreen() {
                   onPress={() => router.push("/upload-highlight" as any)}
                 >
                   <IconSymbol name="bolt.fill" size={18} color="#0A0A0A" />
-                  <Text style={styles.quickActionText}>Post Highlight</Text>
+                  {/* Post Highlight */}
+                  <Text style={styles.quickActionText}>{t.home.postHighlight}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.quickActionBtnOutline}
                   onPress={() => router.push("/free-agents" as any)}
                 >
                   <IconSymbol name="person.2.fill" size={18} color="#39FF14" />
-                  <Text style={styles.quickActionTextOutline}>Free Agents</Text>
+                  <Text style={styles.quickActionTextOutline}>{t.home.freeAgent}</Text>
                 </TouchableOpacity>
               </View>
             )}
