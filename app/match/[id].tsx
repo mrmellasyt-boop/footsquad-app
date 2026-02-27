@@ -294,7 +294,11 @@ export default function MatchDetailScreen() {
   // Rosters from new API structure
   const rosterA: any[] = (match.rosterA ?? []).map((mp: any) => mp.player).filter(Boolean);
   const rosterB: any[] = (match.rosterB ?? []).map((mp: any) => mp.player).filter(Boolean);
-  const pendingRequests: any[] = (match.pendingRequests ?? []);
+  // FIX: each captain only sees pending requests for their own team side
+  const myTeamSide = player?.teamId === match.teamAId ? "A" : player?.teamId === match.teamBId ? "B" : null;
+  const pendingRequests: any[] = (match.pendingRequests ?? []).filter((mp: any) =>
+    myTeamSide ? mp.teamSide === myTeamSide : true
+  );
   const allPlayers = [...rosterA, ...rosterB];
   const opponentPlayers = player?.teamId === match.teamAId ? rosterB : rosterA;
   // FIX: captain rates OWN team players (including himself) - backend enforces this

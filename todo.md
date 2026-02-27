@@ -325,3 +325,7 @@
 - [ ] Fix Join team → joueur doit attendre confirmation capitaine (statut pending, pas direct)
 - [ ] Fix notification join match → envoyer uniquement aux joueurs qui ne sont PAS encore dans l'équipe A (pas aux membres déjà dans l'équipe)
 - [ ] Fix double invitation capitaines → seul le capitaine de l'équipe du joueur qui joint doit recevoir l'invitation
+
+## Bug join match - double capitaine (27 Feb 2026)
+
+- [x] Fix join match request : chaque capitaine voit uniquement les demandes pour son équipe (filtrage par teamSide)
