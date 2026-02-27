@@ -583,6 +583,71 @@ export async function markAllNotificationsRead(playerId: number) {
   await db.update(notifications).set({ isRead: true }).where(eq(notifications.playerId, playerId));
 }
 
+// ─── TEAM STATS ───
+export async function getTeamStats(teamId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Get all completed matches where this team participated
+  const teamMatches = await db.select().from(matches)
+    .where(
+      and(
+        eq(matches.status, "completed"),
+        or(eq(matches.teamAId, teamId), eq(matches.teamBId, teamId))
+      )
+    );
+
+  let wins = 0, draws = 0, losses = 0;
+  let goalsScored = 0, goalsConceded = 0;
+
+  for (const m of teamMatches) {
+    if (m.scoreA === null || m.scoreB === null) continue;
+    const isTeamA = m.teamAId === teamId;
+    const myGoals = isTeamA ? m.scoreA : m.scoreB;
+    const theirGoals = isTeamA ? m.scoreB : m.scoreA;
+    goalsScored += myGoals;
+    goalsConceded += theirGoals;
+    if (myGoals > theirGoals) wins++;
+    else if (myGoals === theirGoals) draws++;
+    else losses++;
+  }
+
+  const totalPlayed = wins + draws + losses;
+  const winRate = totalPlayed > 0 ? Math.round((wins / totalPlayed) * 100) : 0;
+
+  return { totalPlayed, wins, draws, losses, goalsScored, goalsConceded, winRate };
+}
+
+export async function getTeamTopPlayer(teamId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const members = await db.select().from(players).where(eq(players.teamId, teamId));
+  if (members.length === 0) return null;
+
+  // Find player with highest average rating (minimum 1 rating)
+  let topPlayer = null as typeof members[0] | null;
+  let topRating = -1;
+
+  for (const p of members) {
+    if (p.ratingCount > 0) {
+      const avg = p.totalRatings / p.ratingCount;
+      if (avg > topRating) {
+        topRating = avg;
+        topPlayer = p;
+      }
+    }
+  }
+
+  // Fallback: player with most MOTM awards
+  if (!topPlayer) {
+    topPlayer = members.reduce((best, p) => p.motmCount > (best?.motmCount ?? -1) ? p : best, members[0]);
+    topRating = -1;
+  }
+
+  return topPlayer ? { ...topPlayer, avgRating: topRating > 0 ? Math.round(topRating * 10) / 10 : null } : null;
+}
+
 // ─── CHALLENGES ───
 export async function createChallenge(data: InsertChallenge) {
   const db = await getDb();

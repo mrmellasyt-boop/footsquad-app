@@ -151,6 +151,16 @@ export const appRouter = router({
       await db.createNotification(input.playerId, "team_removed", "Removed from Team", `You have been removed from the team`);
       return { success: true };
     }),
+    stats: publicProcedure.input(z.object({ teamId: z.number() })).query(async ({ input }) => {
+      return db.getTeamStats(input.teamId);
+    }),
+    topPlayer: publicProcedure.input(z.object({ teamId: z.number() })).query(async ({ input }) => {
+      return db.getTeamTopPlayer(input.teamId);
+    }),
+    openChallenge: publicProcedure.input(z.object({ teamId: z.number() })).query(async ({ input }) => {
+      const challenges = await db.getTeamChallenges(input.teamId);
+      return challenges.find((c) => c.status === "open") ?? null;
+    }),
     deleteTeam: protectedProcedure.input(z.object({ teamId: z.number() })).mutation(async ({ ctx, input }) => {
       const captain = await db.getPlayerByUserId(ctx.user.id);
       if (!captain || !captain.isCaptain || captain.teamId !== input.teamId) throw new Error("Only captain can delete team");

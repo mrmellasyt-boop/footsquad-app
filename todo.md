@@ -186,3 +186,13 @@
 - [x] Frontend : notification au créateur quand son défi est accepté
 - [x] Frontend : badge "Mon Défi" sur les défis créés par l'utilisateur
 - [x] Icône onglet dans icon-symbol.tsx
+
+## Écran Détail Équipe Enrichi
+
+- [x] Backend : route team.stats (totalMatches, wins, losses, draws, goalsScored, goalsConceded, winRate)
+- [x] Backend : route team.topPlayer (joueur avec le meilleur rating moyen dans l'équipe)
+- [x] Backend : route team.openChallenge (défi ouvert de l'équipe s'il existe)
+- [x] Frontend : section Stats avec cards (Victoires, Nuls, Défaites, Buts, Win Rate)
+- [x] Frontend : section Meilleur Joueur (photo, nom, rating moyen, MOTM count)
+- [x] Frontend : section Défi Ouvert (si l'équipe a un défi actif → lien vers l'écran Challenges)
+- [x] Frontend : améliorer la liste des joueurs avec position + rating
