@@ -16,7 +16,7 @@ function formatTime(d: Date): string {
 
 export default function CreateMatchScreen() {
   const router = useRouter();
-  const [type, setType] = useState<"public" | "friendly">("public");
+  const [type, setType] = useState<"friendly">("friendly");
   const [city, setCity] = useState("");
   const [pitchName, setPitchName] = useState("");
   const [format, setFormat] = useState<"5v5" | "8v8" | "11v11">("5v5");
@@ -140,25 +140,18 @@ export default function CreateMatchScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.form}>
-        {/* Match Type */}
+        {/* Match Type - Friendly only (Public challenges use the Challenges tab) */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Match Type</Text>
           <View style={styles.typeRow}>
             <TouchableOpacity
-              style={[styles.typeBtn, type === "public" && styles.typeBtnActive]}
-              onPress={() => { setType("public"); setSelectedTeam(null); }}
+              style={[styles.typeBtn, styles.typeBtnActive]}
             >
-              <Text style={[styles.typeText, type === "public" && styles.typeTextActive]}>Public</Text>
-              <Text style={styles.typeDesc}>Anyone can request</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.typeBtn, type === "friendly" && styles.typeBtnActive]}
-              onPress={() => setType("friendly")}
-            >
-              <Text style={[styles.typeText, type === "friendly" && styles.typeTextActive]}>Friendly</Text>
-              <Text style={styles.typeDesc}>Invite specific team</Text>
+              <Text style={[styles.typeText, styles.typeTextActive]}>Friendly</Text>
+              <Text style={styles.typeDesc}>Invite a specific team</Text>
             </TouchableOpacity>
           </View>
+          <Text style={styles.typeHint}>💡 Want a public challenge? Use the <Text style={{ color: "#39FF14", fontWeight: "700" }}>Challenges</Text> tab to find opponents.</Text>
         </View>
 
         {/* Opponent Team (Friendly only) */}
@@ -495,4 +488,5 @@ const styles = StyleSheet.create({
   cityItem: { paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, marginBottom: 4 },
   cityText: { color: "#FFFFFF", fontSize: 16 },
   cityTextActive: { color: "#39FF14", fontWeight: "700" },
+  typeHint: { color: "#8A8A8A", fontSize: 12, marginTop: 8, lineHeight: 18 },
 });

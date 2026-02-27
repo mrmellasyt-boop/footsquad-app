@@ -220,3 +220,8 @@
 - [ ] Traduire : Home, Matches, Profile, Search, Challenges, Leaderboard
 - [ ] Traduire : Match Detail, Team Detail, Player Detail
 - [ ] Traduire : notifications, modals, alertes
+
+## Fix Create Match - Supprimer type Public
+
+- [x] Supprimer le type "public" du formulaire Create Match (garder uniquement Friendly)
+- [x] Ajouter hint vers l'onglet Challenges pour les matchs publics
