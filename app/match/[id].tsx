@@ -245,11 +245,30 @@ export default function MatchDetailScreen() {
     onError: (err) => Alert.alert("Error", err.message),
   });
 
-  // Friendly match team invitations
-  const { data: matchRequests } = trpc.match.getRequests.useQuery({ matchId }, { enabled: isAuthenticated && !!match });
-  const acceptMutation = trpc.match.acceptRequest.useMutation({ onSuccess: () => utils.match.getById.invalidate({ id: matchId }) });
-  const declineRequestMutation = trpc.match.declineRequest.useMutation({ onSuccess: () => utils.match.getById.invalidate({ id: matchId }) });
+  // Team requests (both friendly invites and public play requests)
+  const { data: matchRequests, refetch: refetchRequests } = trpc.match.getRequests.useQuery({ matchId }, { enabled: isAuthenticated && !!match });
+  const acceptMutation = trpc.match.acceptRequest.useMutation({
+    onSuccess: () => {
+      utils.match.getById.invalidate({ id: matchId });
+      refetchRequests();
+      Alert.alert("Match Confirmed!", "You accepted the challenge. The match is now confirmed!");
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+  const declineRequestMutation = trpc.match.declineRequest.useMutation({
+    onSuccess: () => { refetchRequests(); },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
 
+  const requestToPlayMutation = trpc.match.requestToPlay.useMutation({
+    onSuccess: () => {
+      refetchRequests();
+      Alert.alert("Challenge Sent!", "Your challenge request has been sent to the match creator. Wait for their response.");
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  // Friendly invite: opponent captain receives invite
   const pendingRequest = (matchRequests ?? []).find((r: any) => r.status === "pending" && player?.teamId === r.teamId && player?.isCaptain);
 
   if (isLoading) {
@@ -282,6 +301,15 @@ export default function MatchDetailScreen() {
   const isCaptainOfTeamA = player?.isCaptain && player?.teamId === match.teamAId;
   const isCaptainOfTeamB = player?.isCaptain && player?.teamId === match.teamBId;
   const isCaptainOfThisMatch = isCaptainOfTeamA || isCaptainOfTeamB;
+
+  // Request to Play logic (public matches without opponent)
+  const isPublicMatch = match.type === "public";
+  const hasNoOpponent = !match.teamBId;
+  const isOtherCaptain = player?.isCaptain && player?.teamId && player.teamId !== match.teamAId;
+  const myTeamAlreadyRequested = (matchRequests ?? []).some((r: any) => r.teamId === player?.teamId && r.status === "pending");
+  const canRequestToPlay = isAuthenticated && isPublicMatch && hasNoOpponent && isOtherCaptain && !myTeamAlreadyRequested && matchActive;
+  // Creator captain sees pending play requests
+  const pendingPlayRequests = isCaptainOfTeamA && isPublicMatch ? (matchRequests ?? []).filter((r: any) => r.status === "pending") : [];
 
   const handleJoinPress = () => {
     if (!player) return;
@@ -356,6 +384,64 @@ export default function MatchDetailScreen() {
                 <Text style={styles.infoText}>{match.format} • {totalCount}/{match.maxPlayers} players total</Text>
               </View>
             </View>
+
+            {/* Request to Play button (public match, other captains) */}
+            {canRequestToPlay && (
+              <TouchableOpacity
+                style={styles.requestToPlayBtn}
+                onPress={() => requestToPlayMutation.mutate({ matchId })}
+                disabled={requestToPlayMutation.isPending}
+              >
+                <IconSymbol name="sportscourt.fill" size={20} color="#0A0A0A" />
+                <Text style={styles.requestToPlayBtnText}>
+                  {requestToPlayMutation.isPending ? "Sending Challenge..." : "Request to Play vs this Team"}
+                </Text>
+              </TouchableOpacity>
+            )}
+
+            {/* Challenge Request Sent Banner */}
+            {myTeamAlreadyRequested && isPublicMatch && (
+              <View style={styles.pendingBanner}>
+                <IconSymbol name="clock.fill" size={18} color="#FFD700" />
+                <Text style={styles.pendingBannerText}>Challenge request sent — awaiting captain response</Text>
+              </View>
+            )}
+
+            {/* Creator Captain: Pending Play Requests */}
+            {pendingPlayRequests.length > 0 && (
+              <View style={styles.pendingSection}>
+                <Text style={styles.sectionTitle}>Challenge Requests ({pendingPlayRequests.length})</Text>
+                {pendingPlayRequests.map((r: any) => (
+                  <View key={r.id} style={styles.pendingRow}>
+                    <View style={styles.teamSelectLogo}>
+                      {r.team?.logoUrl ? (
+                        <Image source={{ uri: r.team.logoUrl }} style={styles.teamSelectLogoImg} contentFit="cover" />
+                      ) : (
+                        <IconSymbol name="shield.fill" size={20} color="#39FF14" />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.pendingName}>{r.team?.name ?? "Unknown Team"}</Text>
+                      <Text style={styles.pendingSide}>Wants to play against your team</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.approveBtn}
+                      onPress={() => acceptMutation.mutate({ requestId: r.id, matchId })}
+                      disabled={acceptMutation.isPending}
+                    >
+                      <Text style={styles.approveBtnText}>✓</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.declineSmallBtn}
+                      onPress={() => declineRequestMutation.mutate({ requestId: r.id })}
+                      disabled={declineRequestMutation.isPending}
+                    >
+                      <Text style={styles.declineSmallBtnText}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {/* Friendly Match Team Invitation */}
             {pendingRequest && (
@@ -668,6 +754,12 @@ const styles = StyleSheet.create({
   motmAvatarImg: { width: 36, height: 36, borderRadius: 18 },
   motmName: { color: "#FFFFFF", fontSize: 15, fontWeight: "600", flex: 1 },
   motmPos: { color: "#39FF14", fontSize: 12, fontWeight: "700" },
+  // Request to Play button
+  requestToPlayBtn: {
+    marginHorizontal: 20, backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 14,
+    alignItems: "center", marginBottom: 16, flexDirection: "row", justifyContent: "center", gap: 10,
+  },
+  requestToPlayBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 16 },
   // Friendly invite
   inviteCard: {
     marginHorizontal: 20, backgroundColor: "#1A1A1A", borderRadius: 16, padding: 16,

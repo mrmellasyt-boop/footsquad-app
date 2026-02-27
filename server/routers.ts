@@ -298,7 +298,29 @@ export const appRouter = router({
     requestToPlay: protectedProcedure.input(z.object({ matchId: z.number() })).mutation(async ({ ctx, input }) => {
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player || !player.isCaptain || !player.teamId) throw new Error("Only captains can request");
+      const match = await db.getMatchById(input.matchId);
+      if (!match) throw new Error("Match not found");
+      if (match.type !== "public") throw new Error("Only public matches accept requests");
+      if (match.teamBId) throw new Error("Match already has an opponent");
+      if (match.teamAId === player.teamId) throw new Error("Cannot request to play against your own team");
+      // Check if already requested
+      const existing = await db.getMatchRequests(input.matchId);
+      if (existing.some((r: any) => r.teamId === player.teamId && r.status === "pending")) {
+        throw new Error("Request already sent");
+      }
       await db.createMatchRequest(input.matchId, player.teamId);
+      // Notify match creator captain
+      const creatorTeam = await db.getTeamById(match.teamAId);
+      if (creatorTeam?.captainId) {
+        const requestingTeam = await db.getTeamById(player.teamId);
+        await db.createNotification(
+          creatorTeam.captainId,
+          "play_request",
+          "New Challenge Request",
+          `${requestingTeam?.name ?? "A team"} wants to play against your team`,
+          JSON.stringify({ matchId: input.matchId, teamId: player.teamId })
+        );
+      }
       return { success: true };
     }),
     getRequests: protectedProcedure.input(z.object({ matchId: z.number() })).query(async ({ input }) => {
@@ -309,16 +331,51 @@ export const appRouter = router({
       }));
     }),
     acceptRequest: protectedProcedure.input(z.object({ requestId: z.number(), matchId: z.number() })).mutation(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player || !player.isCaptain) throw new Error("Only captains can accept requests");
       await db.updateMatchRequest(input.requestId, "accepted");
       const requests = await db.getMatchRequests(input.matchId);
-      const accepted = requests.find(r => r.id === input.requestId);
+      const accepted = requests.find((r: any) => r.id === input.requestId);
       if (accepted) {
+        // Assign teamB and confirm the match
         await db.updateMatch(input.matchId, { teamBId: accepted.teamId, status: "confirmed" });
+        // Decline all other pending requests for this match
+        const otherPending = requests.filter((r: any) => r.id !== input.requestId && r.status === "pending");
+        for (const other of otherPending) {
+          await db.updateMatchRequest(other.id, "rejected");
+        }
+        // Notify the accepted team captain
+        const acceptedTeam = await db.getTeamById(accepted.teamId);
+        if (acceptedTeam?.captainId) {
+          const match = await db.getMatchById(input.matchId);
+          const creatorTeam = match?.teamAId ? await db.getTeamById(match.teamAId) : null;
+          await db.createNotification(
+            acceptedTeam.captainId,
+            "play_request_accepted",
+            "Challenge Accepted!",
+            `${creatorTeam?.name ?? "The team"} accepted your challenge request. Match is confirmed!`,
+            JSON.stringify({ matchId: input.matchId })
+          );
+        }
       }
       return { success: true };
     }),
     declineRequest: protectedProcedure.input(z.object({ requestId: z.number() })).mutation(async ({ ctx, input }) => {
       await db.updateMatchRequest(input.requestId, "rejected");
+      // Notify the declined team captain
+      const allRequests = await db.getMatchRequestById(input.requestId);
+      if (allRequests?.teamId) {
+        const declinedTeam = await db.getTeamById(allRequests.teamId);
+        if (declinedTeam?.captainId) {
+          await db.createNotification(
+            declinedTeam.captainId,
+            "play_request_declined",
+            "Challenge Declined",
+            `Your challenge request was declined. Keep looking for a match!`,
+            JSON.stringify({ matchId: allRequests.matchId })
+          );
+        }
+      }
       return { success: true };
     }),
     inviteTeam: protectedProcedure.input(z.object({ matchId: z.number(), teamId: z.number() })).mutation(async ({ ctx, input }) => {

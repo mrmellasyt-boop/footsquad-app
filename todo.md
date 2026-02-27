@@ -76,3 +76,15 @@
 - [x] Frontend: captain sees pending requests with Accept/Decline buttons
 - [x] Frontend: Match Detail shows both team rosters (name + photo) clearly
 - [x] Frontend: full team shows "Team Full" badge, join disabled
+
+## Fix Public Match: Request to Play + Home Filtering
+
+- [x] Backend: requestToPlay validates public match, no opponent, not own team, no duplicate, notifies captain
+- [x] Backend: acceptRequest assigns teamBId, confirms match, declines other requests, notifies accepted team
+- [x] Backend: declineRequest notifies declined team captain
+- [x] Backend: getMatchRequestById function added to db.ts
+- [x] Backend: getUpcomingMatches filters only confirmed matches with two teams
+- [x] Frontend: 'Request to Play vs this Team' button (public match, other captains only)
+- [x] Frontend: Challenge Request Sent banner after requesting
+- [x] Frontend: Creator captain sees pending play requests with Accept/Decline
+- [x] Home: only confirmed matches with two teams shown (22 tests passed)

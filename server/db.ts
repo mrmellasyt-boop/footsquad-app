@@ -1,4 +1,4 @@
-import { eq, and, desc, asc, gte, lte, ne, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte, ne, sql, inArray, isNotNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser, users,
@@ -177,9 +177,14 @@ export async function getUpcomingMatches(city?: string) {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
-  const conditions = [gte(matches.matchDate, now), ne(matches.status, "cancelled")];
+  // Home shows only confirmed matches with TWO teams assigned
+  const conditions = [
+    gte(matches.matchDate, now),
+    eq(matches.status, "confirmed"),
+    isNotNull(matches.teamBId),
+  ];
   if (city) conditions.push(eq(matches.city, city));
-  return db.select().from(matches).where(and(...conditions)).orderBy(asc(matches.matchDate)).limit(50);
+  return db.select().from(matches).where(and(...conditions)).orderBy(asc(matches.matchDate)).limit(10);
 }
 
 export async function getPublicMatches() {
@@ -279,6 +284,13 @@ export async function getMatchRequests(matchId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(matchRequests).where(eq(matchRequests.matchId, matchId));
+}
+
+export async function getMatchRequestById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const results = await db.select().from(matchRequests).where(eq(matchRequests.id, id));
+  return results[0] ?? null;
 }
 
 export async function updateMatchRequest(id: number, status: "accepted" | "rejected") {
