@@ -399,7 +399,7 @@ export default function MatchDetailScreen() {
               </View>
               <View style={styles.infoRow}>
                 <IconSymbol name="person.2.fill" size={16} color="#39FF14" />
-                <Text style={styles.infoText}>{match.format} • {totalCount}/{match.maxPlayers} players total</Text>
+                <Text style={styles.infoText}>{match.format} • {countA}/{maxPerTeam} vs {countB}/{maxPerTeam} players per team</Text>
               </View>
             </View>
 

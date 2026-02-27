@@ -262,3 +262,9 @@
 - [x] Backend : capitaine note ses propres joueurs (pas les adversaires)
 - [x] Backend : budget anti-triche adapté (total / nb joueurs propres, max avg 7/10)
 - [x] Frontend : post-match affiche les joueurs de sa propre équipe pour notation
+
+## Fix MaxPlayers Logic
+
+- [x] Fix maxPlayers = max par équipe (pas total des deux équipes)
+- [x] Affichage corrigé : "{countA}/{maxPerTeam} vs {countB}/{maxPerTeam} players per team"
+- [x] Validation join déjà correcte (sideCount >= maxPlayersPerTeam dans routers.ts)
