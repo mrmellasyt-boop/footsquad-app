@@ -15,14 +15,55 @@ export default function TeamDetailScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  const { data: team, isLoading } = trpc.team.getById.useQuery({ id: teamId });
-  const { data: myPlayer } = trpc.player.me.useQuery(undefined, { enabled: isAuthenticated });
+  const { data: team, isLoading, refetch: refetchTeam } = trpc.team.getById.useQuery({ id: teamId });
+  const { data: myPlayer, refetch: refetchMe } = trpc.player.me.useQuery(undefined, { enabled: isAuthenticated });
   const utils = trpc.useUtils();
 
-  const joinMutation = trpc.team.join.useMutation({ onSuccess: () => { utils.team.getById.invalidate({ id: teamId }); utils.player.me.invalidate(); } });
-  const updateLogoMutation = trpc.team.updateLogo.useMutation({ onSuccess: () => utils.team.getById.invalidate({ id: teamId }) });
-  const addPlayerMutation = trpc.team.addPlayer.useMutation({ onSuccess: () => utils.team.getById.invalidate({ id: teamId }) });
-  const removePlayerMutation = trpc.team.removePlayer.useMutation({ onSuccess: () => utils.team.getById.invalidate({ id: teamId }) });
+  const joinMutation = trpc.team.join.useMutation({
+    onSuccess: () => {
+      refetchTeam();
+      refetchMe();
+      utils.player.me.invalidate();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const leaveMutation = trpc.team.leave.useMutation({
+    onSuccess: () => {
+      Alert.alert("Left Team", "You have successfully left the team.");
+      refetchTeam();
+      refetchMe();
+      utils.player.me.invalidate();
+      router.back();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const deleteMutation = trpc.team.deleteTeam.useMutation({
+    onSuccess: () => {
+      Alert.alert("Team Deleted", "Your team has been deleted.");
+      utils.player.me.invalidate();
+      router.back();
+    },
+    onError: (err: any) => Alert.alert("Error", err.message),
+  });
+
+  const updateLogoMutation = trpc.team.updateLogo.useMutation({
+    onSuccess: () => refetchTeam(),
+  });
+
+  const addPlayerMutation = trpc.team.addPlayer.useMutation({
+    onSuccess: () => {
+      refetchTeam();
+      Alert.alert("Player Added", "Player has been added to the team.");
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const removePlayerMutation = trpc.team.removePlayer.useMutation({
+    onSuccess: () => refetchTeam(),
+    onError: (err) => Alert.alert("Error", err.message),
+  });
 
   // Add player modal
   const [showAddPlayer, setShowAddPlayer] = useState(false);
@@ -34,6 +75,7 @@ export default function TeamDetailScreen() {
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
   const isCaptain = myPlayer?.isCaptain && myPlayer?.teamId === teamId;
+  const isMember = myPlayer?.teamId === teamId && !myPlayer?.isCaptain;
   const canJoin = isAuthenticated && myPlayer && !myPlayer.teamId && myPlayer.isFreeAgent;
 
   if (isLoading) {
@@ -71,6 +113,24 @@ export default function TeamDetailScreen() {
     ]);
   };
 
+  const handleLeaveTeam = () => {
+    Alert.alert("Leave Team", "Are you sure you want to leave this team?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Leave", style: "destructive", onPress: () => leaveMutation.mutate() },
+    ]);
+  };
+
+  const handleDeleteTeam = () => {
+    Alert.alert(
+      "Delete Team",
+      "Are you sure you want to delete this team? This action cannot be undone. All members will be removed.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate({ teamId }) },
+      ]
+    );
+  };
+
   const filteredAgents = searchQuery.length >= 2 ? (searchResults ?? []) : [];
 
   return (
@@ -102,8 +162,23 @@ export default function TeamDetailScreen() {
               </TouchableOpacity>
               <Text style={styles.teamName}>{team.name}</Text>
               <Text style={styles.teamCity}>{team.city}</Text>
+              <View style={styles.statsRow}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statValue}>{team.totalMatches}</Text>
+                  <Text style={styles.statLabel}>Matches</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statValue}>{team.totalWins}</Text>
+                  <Text style={styles.statLabel}>Wins</Text>
+                </View>
+                <View style={styles.statBox}>
+                  <Text style={styles.statValue}>{team.members?.length ?? 0}</Text>
+                  <Text style={styles.statLabel}>Players</Text>
+                </View>
+              </View>
             </View>
 
+            {/* Join Team */}
             {canJoin && (
               <TouchableOpacity
                 style={styles.joinBtn}
@@ -114,10 +189,25 @@ export default function TeamDetailScreen() {
               </TouchableOpacity>
             )}
 
+            {/* Captain Actions */}
             {isCaptain && (
-              <TouchableOpacity style={styles.addPlayerBtn} onPress={() => setShowAddPlayer(true)}>
-                <IconSymbol name="person.badge.plus" size={20} color="#0A0A0A" />
-                <Text style={styles.addPlayerBtnText}>Add Player</Text>
+              <View style={styles.captainActions}>
+                <TouchableOpacity style={styles.addPlayerBtn} onPress={() => setShowAddPlayer(true)}>
+                  <IconSymbol name="person.badge.plus" size={20} color="#0A0A0A" />
+                  <Text style={styles.addPlayerBtnText}>Add Player</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.deleteTeamBtn} onPress={handleDeleteTeam} disabled={deleteMutation.isPending}>
+                  <IconSymbol name="trash.fill" size={18} color="#FF4444" />
+                  <Text style={styles.deleteTeamBtnText}>{deleteMutation.isPending ? "Deleting..." : "Delete Team"}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Member: Leave Team */}
+            {isMember && (
+              <TouchableOpacity style={styles.leaveBtn} onPress={handleLeaveTeam} disabled={leaveMutation.isPending}>
+                <IconSymbol name="arrow.right.square.fill" size={18} color="#FF4444" />
+                <Text style={styles.leaveBtnText}>{leaveMutation.isPending ? "Leaving..." : "Leave Team"}</Text>
               </TouchableOpacity>
             )}
 
@@ -161,55 +251,55 @@ export default function TeamDetailScreen() {
       {/* Add Player Modal */}
       <Modal visible={showAddPlayer} transparent animationType="slide">
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add Player</Text>
-              <TouchableOpacity onPress={() => { setShowAddPlayer(false); setSearchQuery(""); }}>
-                <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
-              </TouchableOpacity>
-            </View>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search player by name or city..."
-              placeholderTextColor="#555"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoFocus
-              returnKeyType="search"
-            />
-            {searchQuery.length < 2 && (
-              <Text style={styles.noResults}>Type at least 2 characters to search</Text>
-            )}
-            {isSearching && searchQuery.length >= 2 && (
-              <ActivityIndicator color="#39FF14" style={{ marginTop: 16 }} />
-            )}
-            <ScrollView style={styles.playerList}>
-              {searchQuery.length >= 2 && !isSearching && filteredAgents.length === 0 ? (
-                <Text style={styles.noResults}>No players found</Text>
-              ) : (
-                filteredAgents.map((agent: any) => (
-                  <View key={agent.id} style={styles.agentRow}>
-                    <View style={styles.agentInfo}>
-                      <Text style={styles.agentName}>{agent.fullName}</Text>
-                      <Text style={styles.agentMeta}>{agent.position} - {agent.city}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.addBtn}
-                      onPress={() => {
-                        addPlayerMutation.mutate({ teamId, playerId: agent.id });
-                        setShowAddPlayer(false);
-                        setSearchQuery("");
-                      }}
-                    >
-                      <IconSymbol name="plus.circle.fill" size={24} color="#39FF14" />
-                    </TouchableOpacity>
-                  </View>
-                ))
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Add Player</Text>
+                <TouchableOpacity onPress={() => { setShowAddPlayer(false); setSearchQuery(""); }}>
+                  <IconSymbol name="xmark.circle.fill" size={24} color="#8A8A8A" />
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search player by name or city..."
+                placeholderTextColor="#555"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+                returnKeyType="search"
+              />
+              {searchQuery.length < 2 && (
+                <Text style={styles.noResults}>Type at least 2 characters to search</Text>
               )}
-            </ScrollView>
+              {isSearching && searchQuery.length >= 2 && (
+                <ActivityIndicator color="#39FF14" style={{ marginTop: 16 }} />
+              )}
+              <ScrollView style={styles.playerList} keyboardShouldPersistTaps="handled">
+                {searchQuery.length >= 2 && !isSearching && filteredAgents.length === 0 ? (
+                  <Text style={styles.noResults}>No players found</Text>
+                ) : (
+                  filteredAgents.map((agent: any) => (
+                    <View key={agent.id} style={styles.agentRow}>
+                      <View style={styles.agentInfo}>
+                        <Text style={styles.agentName}>{agent.fullName}</Text>
+                        <Text style={styles.agentMeta}>{agent.position} - {agent.city}</Text>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.addBtn}
+                        onPress={() => {
+                          addPlayerMutation.mutate({ teamId, playerId: agent.id });
+                          setShowAddPlayer(false);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <IconSymbol name="plus.circle.fill" size={24} color="#39FF14" />
+                      </TouchableOpacity>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            </View>
           </View>
-        </View>
         </KeyboardAvoidingView>
       </Modal>
     </ScreenContainer>
@@ -226,10 +316,19 @@ const styles = StyleSheet.create({
   cameraOverlay: { position: "absolute", bottom: 0, right: 0, backgroundColor: "#39FF14", borderRadius: 12, padding: 4 },
   teamName: { color: "#FFFFFF", fontSize: 24, fontWeight: "900" },
   teamCity: { color: "#8A8A8A", fontSize: 14, marginTop: 4 },
+  statsRow: { flexDirection: "row", gap: 24, marginTop: 16 },
+  statBox: { alignItems: "center" },
+  statValue: { color: "#39FF14", fontSize: 22, fontWeight: "900" },
+  statLabel: { color: "#8A8A8A", fontSize: 11, marginTop: 2 },
   joinBtn: { marginHorizontal: 20, backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 14, alignItems: "center", marginBottom: 12 },
   joinBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 16 },
-  addPlayerBtn: { marginHorizontal: 20, backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 12, alignItems: "center", marginBottom: 20, flexDirection: "row", justifyContent: "center", gap: 8 },
+  captainActions: { paddingHorizontal: 20, gap: 10, marginBottom: 20 },
+  addPlayerBtn: { backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 12, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 },
   addPlayerBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 15 },
+  deleteTeamBtn: { backgroundColor: "rgba(255,68,68,0.1)", borderRadius: 16, paddingVertical: 12, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8, borderWidth: 1, borderColor: "#FF4444" },
+  deleteTeamBtnText: { color: "#FF4444", fontWeight: "700", fontSize: 15 },
+  leaveBtn: { marginHorizontal: 20, backgroundColor: "rgba(255,68,68,0.1)", borderRadius: 16, paddingVertical: 12, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8, borderWidth: 1, borderColor: "#FF4444", marginBottom: 20 },
+  leaveBtnText: { color: "#FF4444", fontWeight: "700", fontSize: 15 },
   section: { paddingHorizontal: 20 },
   sectionTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "800", marginBottom: 12 },
   memberRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#1A1A1A", borderRadius: 12, padding: 14, marginBottom: 6, borderWidth: 1, borderColor: "#2A2A2A" },

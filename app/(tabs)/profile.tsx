@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal, ScrollView, Alert } from "react-native";
+import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, TextInput, Modal, ScrollView, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/hooks/use-auth";
@@ -134,9 +134,9 @@ function ProfileSetup() {
 }
 
 function ProfileView() {
-  const { data: player, isLoading } = trpc.player.me.useQuery();
-  const { data: myMatches } = trpc.match.myMatches.useQuery();
-  const { data: allHighlights } = trpc.highlight.list.useQuery();
+  const { data: player, isLoading } = trpc.player.me.useQuery(undefined, { refetchOnWindowFocus: true });
+  const { data: myMatches } = trpc.match.myMatches.useQuery(undefined, { refetchOnWindowFocus: true });
+  const { data: allHighlights } = trpc.highlight.list.useQuery(undefined, { refetchOnWindowFocus: true });
   const { logout } = useAuth();
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -410,6 +410,7 @@ function ProfileView() {
 
       {/* Edit Profile Modal */}
       <Modal visible={showEdit} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -448,6 +449,7 @@ function ProfileView() {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* City Picker for Edit */}
@@ -473,6 +475,7 @@ function ProfileView() {
 
       {/* Change Password Modal */}
       <Modal visible={showPasswordModal} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -495,6 +498,7 @@ function ProfileView() {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

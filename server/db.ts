@@ -167,6 +167,12 @@ export async function searchTeams(query: string) {
   return db.select().from(teams).where(sql`${teams.name} LIKE ${`%${query}%`}`).limit(20);
 }
 
+export async function deleteTeam(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.delete(teams).where(eq(teams.id, id));
+}
+
 // ─── MATCH ───
 export async function createMatch(data: InsertMatch) {
   const db = await getDb();

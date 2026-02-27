@@ -158,3 +158,15 @@
 - [ ] Frontend: score conflict notification + retry form
 - [ ] Frontend: MOTM results reveal after all votes submitted
 - [ ] Frontend: rating budget display (remaining points shown live)
+
+## Bug Fixes v3 (Session 3)
+
+- [x] Fix notifications : son (expo-haptics) + navigation vers la bonne page au clic
+- [x] Fix équipe : joueur peut quitter son équipe (bouton "Leave Team" dans team/[id].tsx)
+- [x] Fix équipe : capitaine peut supprimer l'équipe (bouton "Delete Team" dans team/[id].tsx)
+- [x] Fix capitaine auto-joint son propre match à la création (sans passer par Join Match)
+- [x] Fix capitaine ne peut pas rejoindre sa propre équipe via Join Match
+- [x] Fix points : calculés pour tous les joueurs approuvés (pas seulement capitaines)
+- [x] Fix refresh automatique : refetchOnWindowFocus sur Home, Matches, Leaderboard, Profile, Match Detail
+- [x] Fix clavier : KeyboardAvoidingView sur create-team, profile modals, post-match
+- [x] Fix highlight crop : 9:16 portrait dans upload-highlight.tsx

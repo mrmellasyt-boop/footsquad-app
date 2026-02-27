@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert } from "react-native";
+import { Text, View, TouchableOpacity, StyleSheet, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
@@ -35,7 +35,8 @@ export default function CreateTeamScreen() {
         <Text style={styles.title}>Create Team</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.form}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         <View style={styles.iconCenter}>
           <View style={styles.teamIcon}>
             <IconSymbol name="shield.fill" size={48} color="#39FF14" />
@@ -63,6 +64,7 @@ export default function CreateTeamScreen() {
           <Text style={styles.createBtnText}>{createMutation.isPending ? "Creating..." : "Create Team"}</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal visible={showCityPicker} transparent animationType="slide">
         <View style={styles.modalOverlay}>

@@ -31,7 +31,7 @@ export default function UploadHighlightScreen() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images"],
         allowsEditing: true,
-        aspect: [16, 9],
+        aspect: [9, 16],
         quality: 0.8,
       });
       if (result.canceled || !result.assets[0]) return;

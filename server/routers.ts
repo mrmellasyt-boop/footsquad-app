@@ -151,6 +151,20 @@ export const appRouter = router({
       await db.createNotification(input.playerId, "team_removed", "Removed from Team", `You have been removed from the team`);
       return { success: true };
     }),
+    deleteTeam: protectedProcedure.input(z.object({ teamId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || captain.teamId !== input.teamId) throw new Error("Only captain can delete team");
+      // Remove all members from team
+      const members = await db.getTeamMembers(input.teamId);
+      for (const m of members) {
+        await db.updatePlayer(m.id, { teamId: null, isFreeAgent: true, isCaptain: false });
+        if (m.id !== captain.id) {
+          await db.createNotification(m.id, "team_removed", "Team Disbanded", `Your team has been disbanded by the captain.`);
+        }
+      }
+      await db.deleteTeam(input.teamId);
+      return { success: true };
+    }),
   }),
 
   // ─── MATCH ───
@@ -177,6 +191,8 @@ export const appRouter = router({
         createdBy: player.id,
         status: "pending",
       });
+      // Auto-add captain to Team A roster (approved) so they get points
+      await db.addPlayerToMatch(id, player.id, player.teamId, "A", "approved");
       return { id };
     }),
     getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
@@ -241,6 +257,11 @@ export const appRouter = router({
       // Check if player already in this match
       const existing = await db.getMatchPlayers(input.matchId);
       if (existing.some(mp => mp.playerId === player.id)) throw new Error("Already in this match");
+      // Captain cannot join their own team's match via Join (they are auto-added at creation)
+      const matchForCheck = await db.getMatchById(input.matchId);
+      if (matchForCheck && (matchForCheck.teamAId === player.teamId || matchForCheck.teamBId === player.teamId) && player.isCaptain) {
+        throw new Error("As captain, you are already part of this match");
+      }
       // Add as pending - captain must approve
       await db.addPlayerToMatch(input.matchId, player.id, input.teamId, input.teamSide, "pending");
       // Notify the team captain

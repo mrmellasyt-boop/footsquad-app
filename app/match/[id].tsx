@@ -209,7 +209,7 @@ export default function MatchDetailScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  const { data: match, isLoading, refetch } = trpc.match.getById.useQuery({ id: matchId });
+  const { data: match, isLoading, refetch } = trpc.match.getById.useQuery({ id: matchId }, { refetchOnWindowFocus: true });
   const { data: player } = trpc.player.me.useQuery(undefined, { enabled: isAuthenticated });
   const { data: myJoinStatus, refetch: refetchJoinStatus } = trpc.match.myJoinStatus.useQuery(
     { matchId },
@@ -293,9 +293,11 @@ export default function MatchDetailScreen() {
   const totalCount = countA + countB;
 
   // Can join: authenticated, not already in match, match not completed/cancelled
+  // Captains are auto-added at match creation, so they cannot join via the Join button
   const alreadyInMatch = !!myJoinStatus;
   const matchActive = match.status !== "completed" && match.status !== "cancelled";
-  const canJoin = isAuthenticated && player && !alreadyInMatch && matchActive;
+  const isCapOfThisMatch = player?.isCaptain && (player?.teamId === match.teamAId || player?.teamId === match.teamBId);
+  const canJoin = isAuthenticated && player && !alreadyInMatch && matchActive && !isCapOfThisMatch;
 
   // Is captain of either team in this match
   const isCaptainOfTeamA = player?.isCaptain && player?.teamId === match.teamAId;

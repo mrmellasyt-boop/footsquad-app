@@ -12,7 +12,7 @@ const CARD_WIDTH = Math.round(SCREEN_WIDTH * 0.55);
 const CARD_HEIGHT = Math.round(CARD_WIDTH * (16 / 9));
 
 function BestMomentSection() {
-  const { data: highlights, isLoading } = trpc.highlight.list.useQuery();
+  const { data: highlights, isLoading } = trpc.highlight.list.useQuery(undefined, { refetchOnWindowFocus: true });
   const router = useRouter();
 
   if (isLoading) return null;
@@ -90,7 +90,7 @@ function BestMomentSection() {
 }
 
 function TopPlayersSection() {
-  const { data: players, isLoading } = trpc.player.leaderboard.useQuery({});
+  const { data: players, isLoading } = trpc.player.leaderboard.useQuery({}, { refetchOnWindowFocus: true });
   const router = useRouter();
 
   if (isLoading) return null;
@@ -139,7 +139,7 @@ function TopPlayersSection() {
 }
 
 function UpcomingMatchesSection() {
-  const { data: matchList, isLoading } = trpc.match.upcoming.useQuery({});
+  const { data: matchList, isLoading } = trpc.match.upcoming.useQuery({}, { refetchOnWindowFocus: true });
   const router = useRouter();
 
   if (isLoading) return null;

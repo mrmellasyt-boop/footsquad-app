@@ -12,7 +12,7 @@ export default function LeaderboardScreen() {
   const router = useRouter();
 
   const { data: cities } = trpc.ref.cities.useQuery();
-  const { data: players, isLoading } = trpc.player.leaderboard.useQuery({ city: selectedCity });
+  const { data: players, isLoading } = trpc.player.leaderboard.useQuery({ city: selectedCity }, { refetchOnWindowFocus: true });
 
   return (
     <ScreenContainer>

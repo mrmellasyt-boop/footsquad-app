@@ -14,9 +14,10 @@ export default function MatchesScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const { data: publicMatches, isLoading: loadingPublic } = trpc.match.publicFeed.useQuery();
+  const { data: publicMatches, isLoading: loadingPublic } = trpc.match.publicFeed.useQuery(undefined, { refetchOnWindowFocus: true });
   const { data: myMatches, isLoading: loadingMine } = trpc.match.myMatches.useQuery(undefined, {
     enabled: isAuthenticated,
+    refetchOnWindowFocus: true,
   });
 
   const currentData = activeTab === "public" ? publicMatches : myMatches;

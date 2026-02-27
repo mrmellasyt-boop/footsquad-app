@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, TextInput, Platform,
+  Alert, ActivityIndicator, TextInput, Platform, KeyboardAvoidingView,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
@@ -143,7 +143,8 @@ export default function PostMatchScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView contentContainerStyle={styles.container}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -387,6 +388,7 @@ export default function PostMatchScreen() {
           </View>
         )}
       </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
