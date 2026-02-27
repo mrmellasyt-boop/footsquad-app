@@ -36,7 +36,7 @@ describe("Profile Edit", () => {
     const profileContent = fs.readFileSync("app/(tabs)/profile.tsx", "utf-8");
     expect(profileContent).toContain("showEdit");
     expect(profileContent).toContain("changePassword");
-    expect(profileContent).toContain("ImagePicker");
+    expect(profileContent).toContain("GalleryPicker");
     expect(profileContent).not.toContain("startOAuthLogin");
   });
 });
@@ -49,7 +49,7 @@ describe("Team Management", () => {
     expect(teamContent).toContain("addPlayer");
     expect(teamContent).toContain("removePlayer");
     expect(teamContent).toContain("updateLogo");
-    expect(teamContent).toContain("ImagePicker");
+    expect(teamContent).toContain("GalleryPicker");
     expect(teamContent).toContain("isCaptain");
   });
 
@@ -96,8 +96,8 @@ describe("Highlight Upload", () => {
   it("should have upload-highlight screen with photo and video options", () => {
     const fs = require("fs");
     const highlightContent = fs.readFileSync("app/upload-highlight.tsx", "utf-8");
-    expect(highlightContent).toContain("pickPhoto");
-    expect(highlightContent).toContain("pickVideo");
+    expect(highlightContent).toContain("GalleryPicker");
+    expect(highlightContent).toContain("handlePicked");
     expect(highlightContent).toContain("uploadFile");
     expect(highlightContent).toContain("48");
     expect(highlightContent).toContain("mediaType");

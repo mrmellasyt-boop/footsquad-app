@@ -5,9 +5,9 @@ import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
 import * as Api from "@/lib/_core/api";
 import { compressImage } from "@/lib/media-compress";
+import { GalleryPicker, type PickedAsset } from "@/components/gallery-picker";
 
 export default function UploadHighlightScreen() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function UploadHighlightScreen() {
   const [mediaType, setMediaType] = useState<"photo" | "video">("photo");
   const [uploading, setUploading] = useState(false);
   const [mimeType, setMimeType] = useState<string>("image/jpeg");
+  const [pickerMode, setPickerMode] = useState<"photo" | "video" | null>(null);
 
   const createMutation = trpc.highlight.create.useMutation({
     onSuccess: () => {
@@ -27,38 +28,10 @@ export default function UploadHighlightScreen() {
     },
   });
 
-  const pickPhoto = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [9, 16],
-        quality: 0.8,
-      });
-      if (result.canceled || !result.assets[0]) return;
-      setMediaUri(result.assets[0].uri);
-      setMediaType("photo");
-      setMimeType(result.assets[0].mimeType || "image/jpeg");
-    } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to pick photo");
-    }
-  };
-
-  const pickVideo = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["videos"],
-        allowsEditing: true,
-        videoMaxDuration: 30,
-        quality: 0.7,
-      });
-      if (result.canceled || !result.assets[0]) return;
-      setMediaUri(result.assets[0].uri);
-      setMediaType("video");
-      setMimeType(result.assets[0].mimeType || "video/mp4");
-    } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to pick video");
-    }
+  const handlePicked = (asset: PickedAsset) => {
+    setMediaUri(asset.uri);
+    setMediaType(asset.type);
+    setMimeType(asset.mimeType);
   };
 
   const handleUpload = async () => {
@@ -107,7 +80,7 @@ export default function UploadHighlightScreen() {
           </View>
         ) : (
           <View style={styles.pickSection}>
-            <TouchableOpacity style={styles.pickBtn} onPress={pickPhoto}>
+            <TouchableOpacity style={styles.pickBtn} onPress={() => setPickerMode("photo")}>
               <View style={styles.pickIconWrap}>
                 <IconSymbol name="photo.fill" size={32} color="#39FF14" />
               </View>
@@ -115,7 +88,7 @@ export default function UploadHighlightScreen() {
               <Text style={styles.pickDesc}>Upload a photo highlight</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.pickBtn} onPress={pickVideo}>
+            <TouchableOpacity style={styles.pickBtn} onPress={() => setPickerMode("video")}>
               <View style={styles.pickIconWrap}>
                 <IconSymbol name="video.fill" size={32} color="#39FF14" />
               </View>
@@ -151,6 +124,14 @@ export default function UploadHighlightScreen() {
           </View>
         </View>
       </View>
+      {/* Gallery Picker Modal */}
+      <GalleryPicker
+        visible={pickerMode !== null}
+        mediaType={pickerMode ?? "photo"}
+        maxVideoDuration={30}
+        onPick={handlePicked}
+        onClose={() => setPickerMode(null)}
+      />
     </ScreenContainer>
   );
 }

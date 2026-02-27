@@ -1,0 +1,8 @@
+{
+  "query": "SELECT h.id, h.likes, COUNT(hl.id) as like_count FROM highlights h LEFT JOIN highlight_likes hl ON hl.highlightId = h.id JOIN players p ON p.id = h.playerId WHERE p.full_name LIKE '%Hamza%' GROUP BY h.id, h.likes LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nFQKwthWdG3fpb.root --database Y4PCeNWNUZAwiWRqW9iqRW --execute SELECT h.id, h.likes, COUNT(hl.id) as like_count FROM highlights h LEFT JOIN highlight_likes hl ON hl.highlightId = h.id JOIN players p ON p.id = h.playerId WHERE p.full_name LIKE '%Hamza%' GROUP BY h.id, h.likes LIMIT 5;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'p.full_name' in 'where clause'"
+  ]
+}

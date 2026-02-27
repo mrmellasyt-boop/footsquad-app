@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
+import { GalleryPicker, type PickedAsset } from "@/components/gallery-picker";
 import * as Api from "@/lib/_core/api";
 import { compressProfilePhoto } from "@/lib/media-compress";
 import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
@@ -154,6 +154,7 @@ function ProfileView() {
   const [editPosition, setEditPosition] = useState<"GK" | "DEF" | "MID" | "ATT">("MID");
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhotoPicker, setShowPhotoPicker] = useState(false);
 
   // Change password state
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -184,20 +185,15 @@ function ProfileView() {
     updateMutation.mutate({ fullName: editName.trim(), city: editCity, position: editPosition });
   };
 
-  const handlePickPhoto = async () => {
+  const handlePickPhoto = () => {
+    setShowPhotoPicker(true);
+  };
+
+  const handlePhotoPicked = async (asset: PickedAsset) => {
+    setUploadingPhoto(true);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-      if (result.canceled || !result.assets[0]) return;
-      setUploadingPhoto(true);
-      const asset = result.assets[0];
       const compressedUri = await compressProfilePhoto(asset.uri);
-      const mimeType = asset.mimeType || "image/jpeg";
-      const url = await Api.uploadFile(compressedUri, mimeType);
+      const url = await Api.uploadFile(compressedUri, asset.mimeType);
       updateMutation.mutate({ photoUrl: url });
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to upload photo");
@@ -547,6 +543,14 @@ function ProfileView() {
           </View>
         </View>
       </Modal>
+
+      {/* Photo Picker */}
+      <GalleryPicker
+        visible={showPhotoPicker}
+        mediaType="photo"
+        onPick={handlePhotoPicked}
+        onClose={() => setShowPhotoPicker(false)}
+      />
     </>
   );
 }

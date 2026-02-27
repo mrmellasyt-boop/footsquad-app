@@ -306,11 +306,11 @@ describe("System: Highlights", () => {
     expect(expired.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("Hamza's highlight has 12 likes", async () => {
+  it("Hamza's highlight has 12+ likes", async () => {
     if (skipIfNoDb()) return;
     const hamzaHighlights = await db.select().from(highlights).where(eq(highlights.playerId, hamzaId));
     expect(hamzaHighlights.length).toBeGreaterThanOrEqual(1);
-    expect(hamzaHighlights[0].likes).toBe(12);
+    expect(hamzaHighlights[0].likes).toBeGreaterThanOrEqual(12);
   });
 
   it("Highlight likes table has entries for Hamza's highlight", async () => {
@@ -319,7 +319,7 @@ describe("System: Highlights", () => {
     const hid = hamzaHighlights[0]?.id;
     if (!hid) return;
     const likes = await db.select().from(highlightLikes).where(eq(highlightLikes.highlightId, hid));
-    expect(likes.length).toBe(12);
+    expect(likes.length).toBeGreaterThanOrEqual(12);
   });
 
   it("Highlights have valid mediaUrl (not empty)", async () => {

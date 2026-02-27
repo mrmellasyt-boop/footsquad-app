@@ -1,0 +1,15 @@
+{
+  "query": "SELECT h.id, h.likes, COUNT(hl.id) as like_count FROM highlights h LEFT JOIN highlight_likes hl ON hl.highlightId = h.id JOIN players p ON p.id = h.playerId WHERE p.fullName LIKE '%Hamza%' GROUP BY h.id, h.likes;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nFQKwthWdG3fpb.root --database Y4PCeNWNUZAwiWRqW9iqRW --execute SELECT h.id, h.likes, COUNT(hl.id) as like_count FROM highlights h LEFT JOIN highlight_likes hl ON hl.highlightId = h.id JOIN players p ON p.id = h.playerId WHERE p.fullName LIKE '%Hamza%' GROUP BY h.id, h.likes;",
+  "rows": [
+    {
+      "id": "90001",
+      "likes": "13",
+      "like_count": "13"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tlikes\tlike_count\n90001\t13\t13\n",
+  "stderr": "",
+  "execution_time_ms": 57
+}

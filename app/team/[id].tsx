@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
-import * as ImagePicker from "expo-image-picker";
+import { GalleryPicker, type PickedAsset } from "@/components/gallery-picker";
 import * as Api from "@/lib/_core/api";
 import { compressTeamLogo } from "@/lib/media-compress";
 
@@ -115,6 +115,7 @@ export default function TeamDetailScreen() {
     { enabled: showAddPlayer && searchQuery.length >= 2 }
   );
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [showLogoPicker, setShowLogoPicker] = useState(false);
 
   const isCaptain = myPlayer?.isCaptain && myPlayer?.teamId === teamId;
   const isMember = myPlayer?.teamId === teamId && !myPlayer?.isCaptain;
@@ -128,19 +129,15 @@ export default function TeamDetailScreen() {
     return <ScreenContainer><View style={styles.center}><Text style={styles.emptyText}>Team not found</Text></View></ScreenContainer>;
   }
 
-  const handlePickLogo = async () => {
+  const handlePickLogo = () => {
+    setShowLogoPicker(true);
+  };
+
+  const handleLogoPicked = async (asset: PickedAsset) => {
+    setUploadingLogo(true);
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-      if (result.canceled || !result.assets[0]) return;
-      setUploadingLogo(true);
-      const asset = result.assets[0];
       const compressedUri = await compressTeamLogo(asset.uri);
-      const url = await Api.uploadFile(compressedUri, asset.mimeType || "image/jpeg");
+      const url = await Api.uploadFile(compressedUri, asset.mimeType);
       updateLogoMutation.mutate({ teamId, logoUrl: url });
     } catch (err: any) {
       Alert.alert("Error", err.message || "Failed to upload logo");
@@ -501,6 +498,13 @@ export default function TeamDetailScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Logo Picker */}
+      <GalleryPicker
+        visible={showLogoPicker}
+        mediaType="photo"
+        onPick={handleLogoPicked}
+        onClose={() => setShowLogoPicker(false)}
+      />
     </ScreenContainer>
   );
 }

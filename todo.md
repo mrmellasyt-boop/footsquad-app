@@ -268,3 +268,11 @@
 - [x] Fix maxPlayers = max par équipe (pas total des deux équipes)
 - [x] Affichage corrigé : "{countA}/{maxPerTeam} vs {countB}/{maxPerTeam} players per team"
 - [x] Validation join déjà correcte (sideCount >= maxPlayersPerTeam dans routers.ts)
+
+## Fix Upload Photo (GalleryPicker)
+
+- [x] Remplacer expo-image-picker par expo-media-library (GalleryPicker custom)
+- [x] Upload photo profil via GalleryPicker (sans rebuild APK)
+- [x] Upload logo équipe via GalleryPicker (sans rebuild APK)
+- [x] Upload highlight photo/vidéo via GalleryPicker (sans rebuild APK)
+- [x] Tests mis à jour pour GalleryPicker
