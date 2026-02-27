@@ -136,6 +136,7 @@ function ProfileSetup() {
 function ProfileView() {
   const { data: player, isLoading } = trpc.player.me.useQuery();
   const { data: myMatches } = trpc.match.myMatches.useQuery();
+  const { data: allHighlights } = trpc.highlight.list.useQuery();
   const { logout } = useAuth();
   const router = useRouter();
   const utils = trpc.useUtils();
@@ -308,6 +309,63 @@ function ProfileView() {
                 <IconSymbol name="chevron.right" size={16} color="#8A8A8A" />
               </TouchableOpacity>
             </View>
+
+            {/* My Active Highlights */}
+            {(() => {
+              const myHighlights = (allHighlights ?? []).filter(
+                (h) => h.player?.id === player.id
+              );
+              if (myHighlights.length === 0) return null;
+              return (
+                <View style={styles.sectionBlock}>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                    <Text style={styles.sectionTitle}>My Highlights</Text>
+                    <View style={{ backgroundColor: "#FF4444", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                      <Text style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "700" }}>48H</Text>
+                    </View>
+                  </View>
+                  <FlatList
+                    data={myHighlights}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    keyExtractor={(h) => h.id.toString()}
+                    contentContainerStyle={{ gap: 10 }}
+                    renderItem={({ item: h }) => {
+                      const cardW = 110;
+                      const cardH = Math.round(cardW * (16 / 9));
+                      return (
+                        <TouchableOpacity
+                          style={{ width: cardW, height: cardH, borderRadius: 12, overflow: "hidden", backgroundColor: "#1A1A1A" }}
+                          activeOpacity={0.85}
+                          onPress={() => router.push(`/highlight/${h.id}` as any)}
+                        >
+                          {h.mediaUrl ? (
+                            <Image source={{ uri: h.mediaUrl }} style={{ width: "100%", height: "100%" }} contentFit="cover" />
+                          ) : (
+                            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                              <IconSymbol name="video.fill" size={24} color="#39FF14" />
+                            </View>
+                          )}
+                          <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "rgba(0,0,0,0.7)", padding: 6 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 3 }}>
+                              <IconSymbol name="heart.fill" size={10} color="#FF4444" />
+                              <Text style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "600" }}>{h.likes}</Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }}
+                  />
+                  <TouchableOpacity
+                    style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" }}
+                    onPress={() => router.push("/upload-highlight" as any)}
+                  >
+                    <IconSymbol name="plus.circle.fill" size={16} color="#39FF14" />
+                    <Text style={{ color: "#39FF14", fontSize: 13, fontWeight: "700" }}>Post New Highlight</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })()}
 
             {/* Match History */}
             <View style={styles.sectionBlock}>

@@ -36,3 +36,10 @@
 - [x] Friendly match: opponent captain accept/decline
 - [x] Highlight upload (photo or short video)
 - [x] Highlight auto-delete after 48 hours
+
+## Fix Package 1: Highlights UX
+
+- [x] Home Best Moment: carousel horizontal 9:16 Top 5-10 highlights
+- [x] Highlight Detail screen (media viewer, like button, likes count, user info + city)
+- [x] All Highlights screen with filters by City and Team
+- [x] Player Profile: section showing active highlights (within 48h)

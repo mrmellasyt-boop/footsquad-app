@@ -1,4 +1,4 @@
-import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
@@ -6,34 +6,85 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
 import { Image } from "expo-image";
 
+const SCREEN_WIDTH = Dimensions.get("window").width;
+// 9:16 portrait card: width = 55% of screen, height = width * 16/9
+const CARD_WIDTH = Math.round(SCREEN_WIDTH * 0.55);
+const CARD_HEIGHT = Math.round(CARD_WIDTH * (16 / 9));
+
 function BestMomentSection() {
   const { data: highlights, isLoading } = trpc.highlight.list.useQuery();
-  const topHighlight = highlights?.[0];
+  const router = useRouter();
 
-  if (isLoading || !topHighlight) return null;
+  if (isLoading) return null;
+  const top10 = (highlights ?? []).slice(0, 10);
+  if (top10.length === 0) return null;
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionIcon}>🔥</Text>
-        <Text style={styles.sectionTitle}>Best Moment</Text>
-        <Text style={styles.badge48h}>48H</Text>
-      </View>
-      <View style={styles.highlightCard}>
-        {topHighlight.mediaType === "photo" && topHighlight.mediaUrl && (
-          <Image source={{ uri: topHighlight.mediaUrl }} style={styles.highlightImage} contentFit="cover" />
-        )}
-        <View style={styles.highlightOverlay}>
-          <Text style={styles.highlightName}>{topHighlight.player?.fullName ?? "Unknown"}</Text>
-          <Text style={styles.highlightTeam}>
-            {topHighlight.team?.name ?? "Free Agent"} • {topHighlight.player?.city}
-          </Text>
-          <View style={styles.likesRow}>
-            <IconSymbol name="heart.fill" size={16} color="#FF4444" />
-            <Text style={styles.likesCount}>{topHighlight.likes}</Text>
-          </View>
+        <Text style={styles.sectionTitle}>Best Moments</Text>
+        <View style={styles.headerRight}>
+          <Text style={styles.badge48h}>48H</Text>
+          <TouchableOpacity
+            style={styles.seeAllBtn}
+            onPress={() => router.push("/highlights" as any)}
+          >
+            <Text style={styles.seeAllText}>See All</Text>
+          </TouchableOpacity>
         </View>
       </View>
+      <FlatList
+        data={top10}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+        snapToInterval={CARD_WIDTH + 12}
+        decelerationRate="fast"
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => router.push(`/highlight/${item.id}` as any)}
+            style={[styles.hlCard, { width: CARD_WIDTH, height: CARD_HEIGHT }]}
+          >
+            {item.mediaUrl ? (
+              <Image
+                source={{ uri: item.mediaUrl }}
+                style={styles.hlCardImage}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={styles.hlCardPlaceholder}>
+                <IconSymbol name="video.fill" size={36} color="#39FF14" />
+              </View>
+            )}
+            {/* Gradient overlay */}
+            <View style={styles.hlCardOverlay}>
+              <View style={styles.hlCardTop}>
+                {item.mediaType === "video" && (
+                  <View style={styles.videoTag}>
+                    <IconSymbol name="video.fill" size={12} color="#FFFFFF" />
+                    <Text style={styles.videoTagText}>VIDEO</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.hlCardBottom}>
+                <Text style={styles.hlPlayerName} numberOfLines={1}>
+                  {item.player?.fullName ?? "Unknown"}
+                </Text>
+                <Text style={styles.hlTeamCity} numberOfLines={1}>
+                  {item.team?.name ?? "Free Agent"} • {item.player?.city}
+                </Text>
+                <View style={styles.hlLikesRow}>
+                  <IconSymbol name="heart.fill" size={14} color="#FF4444" />
+                  <Text style={styles.hlLikesCount}>{item.likes}</Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+      />
     </View>
   );
 }
@@ -526,6 +577,37 @@ const styles = StyleSheet.create({
     color: "#8A8A8A",
     fontSize: 14,
   },
+  // ─── Highlight Carousel ───
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  seeAllBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, borderWidth: 1, borderColor: "#39FF14" },
+  seeAllText: { color: "#39FF14", fontSize: 12, fontWeight: "700" },
+  hlCard: {
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#1A1A1A",
+  },
+  hlCardImage: { width: "100%", height: "100%" },
+  hlCardPlaceholder: {
+    flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#1A1A1A",
+  },
+  hlCardOverlay: {
+    position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: "space-between",
+  },
+  hlCardTop: { padding: 10, flexDirection: "row", justifyContent: "flex-end" },
+  videoTag: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(0,0,0,0.6)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4,
+  },
+  videoTagText: { color: "#FFFFFF", fontSize: 10, fontWeight: "700" },
+  hlCardBottom: {
+    padding: 12,
+    backgroundColor: "rgba(0,0,0,0.75)",
+  },
+  hlPlayerName: { color: "#FFFFFF", fontSize: 14, fontWeight: "700" },
+  hlTeamCity: { color: "#9BA1A6", fontSize: 11, marginTop: 2 },
+  hlLikesRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6 },
+  hlLikesCount: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
   quickActions: {
     flexDirection: "row",
     paddingHorizontal: 20,
