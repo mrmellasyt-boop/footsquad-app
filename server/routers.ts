@@ -443,6 +443,59 @@ export const appRouter = router({
       }
       return { success: true };
     }),
+
+    // Accept a friendly match invitation directly (from notification or match page)
+    // This replaces the old acceptRequest flow for friendly matches
+    acceptInvitation: protectedProcedure.input(z.object({ matchId: z.number() })).mutation(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player || !player.isCaptain) throw new Error("Only captains can accept invitations");
+      const match = await db.getMatchById(input.matchId);
+      if (!match) throw new Error("Match not found");
+      if (match.type !== "friendly") throw new Error("Only friendly matches can be accepted this way");
+      if (match.teamBId) throw new Error("Match already has a confirmed opponent");
+      // Find the pending invite for this captain's team
+      const requests = await db.getMatchRequests(input.matchId);
+      const invite = requests.find((r: any) => r.teamId === player.teamId && r.status === "pending");
+      if (!invite) throw new Error("No pending invitation found for your team");
+      // Accept: set teamB + confirm match
+      await db.updateMatchRequest(invite.id, "accepted");
+      await db.updateMatch(input.matchId, { teamBId: player.teamId, status: "confirmed" });
+      // Decline other pending invites
+      const others = requests.filter((r: any) => r.id !== invite.id && r.status === "pending");
+      for (const other of others) await db.updateMatchRequest(other.id, "rejected");
+      // Notify creator captain
+      const teamAId: number | null = match.teamAId ?? null;
+      const creatorTeam = teamAId != null ? await db.getTeamById(teamAId as number) : null;
+      const acceptorTeam = player.teamId != null ? await db.getTeamById(player.teamId as number) : null;
+      if (creatorTeam?.captainId) {
+        await db.createNotification(
+          creatorTeam.captainId,
+          "match_accepted",
+          "Invitation Accepted! ✅",
+          `${acceptorTeam?.name ?? "The team"} accepted your friendly match invitation. Match is confirmed!`,
+          JSON.stringify({ matchId: input.matchId })
+        );
+      }
+      // Notify ALL players of BOTH teams to join the match
+      const teamAMembers = teamAId != null ? await db.getTeamMembers(teamAId as number) : [];
+      const teamBMembers = player.teamId != null ? await db.getTeamMembers(player.teamId as number) : [];
+      const allMembers = [...teamAMembers, ...teamBMembers];
+      for (const member of allMembers) {
+        if (!member.userId) continue;
+        // Skip captains (they already know)
+        if (member.userId === ctx.user.id) continue;
+        if (member.userId === creatorTeam?.captainId) continue;
+        await db.createNotification(
+          member.userId,
+          "join_request",
+          "Match Confirmed - Join Now! ⚽",
+          `Your team has a confirmed friendly match on ${new Date(match.matchDate).toLocaleDateString()}. Tap to join the roster!`,
+          JSON.stringify({ matchId: input.matchId })
+        );
+      }
+      return { success: true, matchId: input.matchId };
+    }),
+
     submitScore: protectedProcedure.input(z.object({
       matchId: z.number(),
       scoreA: z.number().int().min(0),

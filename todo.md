@@ -225,3 +225,11 @@
 
 - [x] Supprimer le type "public" du formulaire Create Match (garder uniquement Friendly)
 - [x] Ajouter hint vers l'onglet Challenges pour les matchs publics
+
+## Fix Friendly Match Flow - Accept Direct
+
+- [x] Backend : route match.acceptInvitationDirect (accepte depuis la notif, confirme le match en une étape)
+- [x] Backend : après confirmation, notifier tous les joueurs des deux équipes pour rejoindre le match
+- [x] Frontend : notifications.tsx - bouton "Accept" inline sur les notifs de type match_invitation
+- [x] Frontend : après Accept dans notif, naviguer directement vers le match confirmé
+- [x] Frontend : match/[id].tsx - supprimer le double Accept, une seule confirmation suffit

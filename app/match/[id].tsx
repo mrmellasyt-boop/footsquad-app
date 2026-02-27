@@ -247,6 +247,18 @@ export default function MatchDetailScreen() {
 
   // Team requests (both friendly invites and public play requests)
   const { data: matchRequests, refetch: refetchRequests } = trpc.match.getRequests.useQuery({ matchId }, { enabled: isAuthenticated && !!match });
+  // Accept friendly invitation (new direct flow - one step)
+  const acceptInvitationMutation = trpc.match.acceptInvitation.useMutation({
+    onSuccess: () => {
+      utils.match.getById.invalidate({ id: matchId });
+      utils.match.myMatches.invalidate();
+      utils.match.upcoming.invalidate();
+      refetchRequests();
+      Alert.alert("Match Confirmed! ✅", "You accepted the invitation. The match is confirmed and your teammates have been notified!");
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+  // Accept public play request (creator accepts a challenger)
   const acceptMutation = trpc.match.acceptRequest.useMutation({
     onSuccess: () => {
       utils.match.getById.invalidate({ id: matchId });
@@ -487,10 +499,10 @@ export default function MatchDetailScreen() {
                 <View style={styles.inviteBtns}>
                   <TouchableOpacity
                     style={styles.acceptBtn}
-                    onPress={() => acceptMutation.mutate({ requestId: pendingRequest.id, matchId })}
-                    disabled={acceptMutation.isPending}
+                    onPress={() => acceptInvitationMutation.mutate({ matchId })}
+                    disabled={acceptInvitationMutation.isPending}
                   >
-                    <Text style={styles.acceptBtnText}>{acceptMutation.isPending ? "..." : "Accept"}</Text>
+                    <Text style={styles.acceptBtnText}>{acceptInvitationMutation.isPending ? "Confirming..." : "Accept Match"}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.declineBtn}
