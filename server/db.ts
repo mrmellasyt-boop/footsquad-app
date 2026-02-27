@@ -14,6 +14,7 @@ import {
   chatMessages,
   follows,
   notifications,
+  challenges, InsertChallenge,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -580,6 +581,53 @@ export async function markAllNotificationsRead(playerId: number) {
   const db = await getDb();
   if (!db) return;
   await db.update(notifications).set({ isRead: true }).where(eq(notifications.playerId, playerId));
+}
+
+// ─── CHALLENGES ───
+export async function createChallenge(data: InsertChallenge) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(challenges).values(data);
+  return result[0].insertId;
+}
+
+export async function getChallenges(filters: { city?: string; format?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = [eq(challenges.status, "open")];
+  if (filters.city) conditions.push(eq(challenges.city, filters.city));
+  if (filters.format) conditions.push(eq(challenges.format, filters.format as any));
+  const rows = await db.select().from(challenges)
+    .where(and(...conditions))
+    .orderBy(desc(challenges.createdAt))
+    .limit(50);
+  // Enrich with team data
+  const enriched = await Promise.all(rows.map(async (c) => {
+    const team = await getTeamById(c.teamId);
+    return { ...c, team };
+  }));
+  return enriched;
+}
+
+export async function getChallengeById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(challenges).where(eq(challenges.id, id)).limit(1);
+  if (!rows[0]) return null;
+  const team = await getTeamById(rows[0].teamId);
+  return { ...rows[0], team };
+}
+
+export async function updateChallenge(id: number, data: Partial<InsertChallenge>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(challenges).set(data).where(eq(challenges.id, id));
+}
+
+export async function getTeamChallenges(teamId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(challenges).where(eq(challenges.teamId, teamId)).orderBy(desc(challenges.createdAt));
 }
 
 // ─── CITIES & COUNTRIES ───

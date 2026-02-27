@@ -760,11 +760,107 @@ export const appRouter = router({
     }),
   }),
 
-  // ─── REFERENCE DATA ───
+   // ─── REFERENCE DATA ───
   ref: router({
     cities: publicProcedure.query(() => db.getPredefinedCities()),
     countries: publicProcedure.query(() => db.getCountries()),
   }),
-});
 
+  // ─── CHALLENGES ───
+  challenge: router({
+    list: publicProcedure.input(z.object({
+      city: z.string().optional(),
+      format: z.enum(["5v5", "8v8", "11v11"]).optional(),
+    })).query(async ({ input }) => {
+      return db.getChallenges(input);
+    }),
+
+    create: protectedProcedure.input(z.object({
+      city: z.string().min(1),
+      format: z.enum(["5v5", "8v8", "11v11"]),
+      preferredDate: z.string().optional(),
+      message: z.string().max(280).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || !captain.teamId) throw new Error("Only team captains can post challenges");
+      // Check if team already has an open challenge
+      const existing = await db.getTeamChallenges(captain.teamId);
+      const hasOpen = existing.some((c) => c.status === "open");
+      if (hasOpen) throw new Error("Your team already has an open challenge. Cancel it first.");
+      const id = await db.createChallenge({
+        teamId: captain.teamId,
+        city: input.city,
+        format: input.format,
+        preferredDate: input.preferredDate,
+        message: input.message,
+        status: "open",
+      });
+      return { id };
+    }),
+
+    accept: protectedProcedure.input(z.object({ challengeId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain || !captain.teamId) throw new Error("Only team captains can accept challenges");
+      const challenge = await db.getChallengeById(input.challengeId);
+      if (!challenge) throw new Error("Challenge not found");
+      if (challenge.status !== "open") throw new Error("Challenge is no longer open");
+      if (challenge.teamId === captain.teamId) throw new Error("You cannot accept your own challenge");
+      // Create a confirmed friendly match between the two teams
+      const matchDate = new Date();
+      matchDate.setDate(matchDate.getDate() + 7); // Default: 1 week from now
+      const format = challenge.format;
+      const maxPerTeam = format === "5v5" ? 5 : format === "8v8" ? 8 : 11;
+      const matchId = await db.createMatch({
+        type: "friendly",
+        status: "confirmed",
+        city: challenge.city,
+        pitchName: "TBD",
+        matchDate,
+        format,
+        maxPlayers: maxPerTeam * 2,
+        maxPlayersPerTeam: maxPerTeam,
+        teamAId: challenge.teamId,
+        teamBId: captain.teamId,
+        createdBy: captain.id,
+      });
+      // Auto-add both captains to the match
+      const challengerCaptain = await db.getPlayerById((await db.getTeamById(challenge.teamId))!.captainId);
+      if (challengerCaptain) {
+        await db.addPlayerToMatch(matchId, challengerCaptain.id, challenge.teamId, "A", "approved");
+      }
+      await db.addPlayerToMatch(matchId, captain.id, captain.teamId, "B", "approved");
+      // Mark challenge as accepted
+      await db.updateChallenge(input.challengeId, { status: "accepted", matchId });
+      // Notify the challenger captain
+      if (challengerCaptain) {
+        await db.createNotification(
+          challengerCaptain.id,
+          "challenge_accepted",
+          "Challenge Accepted!",
+          `${captain.fullName}'s team accepted your challenge! A match has been created.`,
+          JSON.stringify({ matchId })
+        );
+      }
+      return { matchId };
+    }),
+
+    cancel: protectedProcedure.input(z.object({ challengeId: z.number() })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain) throw new Error("Only captains can cancel challenges");
+      const challenge = await db.getChallengeById(input.challengeId);
+      if (!challenge) throw new Error("Challenge not found");
+      if (challenge.teamId !== captain.teamId) throw new Error("You can only cancel your own challenges");
+      await db.updateChallenge(input.challengeId, { status: "cancelled" });
+      return { success: true };
+    }),
+
+    myTeamChallenge: protectedProcedure.query(async ({ ctx }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.teamId) return null;
+      const challenges = await db.getTeamChallenges(captain.teamId);
+      const open = challenges.find((c) => c.status === "open");
+      return open ?? null;
+    }),
+  }),
+});
 export type AppRouter = typeof appRouter;

@@ -170,3 +170,19 @@
 - [x] Fix refresh automatique : refetchOnWindowFocus sur Home, Matches, Leaderboard, Profile, Match Detail
 - [x] Fix clavier : KeyboardAvoidingView sur create-team, profile modals, post-match
 - [x] Fix highlight crop : 9:16 portrait dans upload-highlight.tsx
+
+## Écran Défis Ouverts (Open Challenges)
+
+- [x] Schema : table `challenges` (id, teamId, city, format, message, status, matchId, createdAt)
+- [x] Backend : route challenge.create (capitaine crée un défi public)
+- [x] Backend : route challenge.list (feed filtré par ville/format/statut)
+- [x] Backend : route challenge.accept (capitaine adverse accepte → crée un match confirmed)
+- [x] Backend : route challenge.cancel (capitaine annule son propre défi)
+- [x] Frontend : écran Défis Ouverts (onglet dans la nav principale)
+- [x] Frontend : feed de défis avec filtres ville + format
+- [x] Frontend : carte défi (équipe, ville, format, message, date)
+- [x] Frontend : bouton "Lancer un Défi" (modal formulaire)
+- [x] Frontend : bouton "Accepter" (capitaine adverse)
+- [x] Frontend : notification au créateur quand son défi est accepté
+- [x] Frontend : badge "Mon Défi" sur les défis créés par l'utilisateur
+- [x] Icône onglet dans icon-symbol.tsx

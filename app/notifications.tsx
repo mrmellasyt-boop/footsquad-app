@@ -27,6 +27,7 @@ function getNotifIcon(type: string): string {
     case "rating_open": return "star.fill";
     case "follow": return "person.2.fill";
     case "highlight_like": return "heart.fill";
+    case "challenge_accepted": return "bolt.fill";
     default: return "bell.fill";
   }
 }
@@ -50,6 +51,8 @@ function getNotifColor(type: string): string {
       return "#FFD700";
     case "highlight_like":
       return "#FF6B6B";
+    case "challenge_accepted":
+      return "#39FF14";
     default:
       return "#39FF14";
   }
@@ -74,6 +77,12 @@ function navigateFromNotif(router: ReturnType<typeof useRouter>, notif: any) {
     // Highlight-related
     if (type === "highlight_like" && data.highlightId) {
       router.push(`/highlight/${data.highlightId}` as any);
+      return;
+    }
+
+    // Challenge-related
+    if (type === "challenge_accepted" && data.matchId) {
+      router.push(`/match/${data.matchId}` as any);
       return;
     }
 

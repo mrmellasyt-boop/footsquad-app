@@ -161,6 +161,20 @@ export const follows = mysqlTable("follows", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+// ─── Open Challenges ───
+export const challenges = mysqlTable("challenges", {
+  id: int("id").autoincrement().primaryKey(),
+  teamId: int("teamId").notNull(),
+  city: varchar("city", { length: 100 }).notNull(),
+  format: mysqlEnum("format", ["5v5", "8v8", "11v11"]).notNull(),
+  preferredDate: varchar("preferredDate", { length: 100 }), // free text e.g. "Samedi matin"
+  message: text("message"),
+  status: mysqlEnum("status", ["open", "accepted", "cancelled"]).default("open").notNull(),
+  matchId: int("matchId"), // set when accepted → creates a match
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 // ─── Notifications ───
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
@@ -189,3 +203,5 @@ export type Highlight = typeof highlights.$inferSelect;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type Follow = typeof follows.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
+export type Challenge = typeof challenges.$inferSelect;
+export type InsertChallenge = typeof challenges.$inferInsert;

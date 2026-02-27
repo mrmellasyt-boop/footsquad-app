@@ -45,6 +45,8 @@ const MAPPING = {
   "trash.fill": "delete",
   "person.badge.plus": "person-add",
   "person.badge.minus": "person-remove",
+  "clock.fill": "access-time",
+  "flame.fill": "local-fire-department",
 } as IconMapping;
 
 /**
