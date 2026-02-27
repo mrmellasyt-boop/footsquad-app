@@ -196,3 +196,16 @@
 - [x] Frontend : section Meilleur Joueur (photo, nom, rating moyen, MOTM count)
 - [x] Frontend : section Défi Ouvert (si l'équipe a un défi actif → lien vers l'écran Challenges)
 - [x] Frontend : améliorer la liste des joueurs avec position + rating
+
+## Écran Recherche Équipes & Joueurs
+
+- [x] Backend : route player.searchByCity (filtre par ville + position)
+- [x] Backend : route team.searchByCity (filtre par ville avec stats)
+- [x] Frontend : écran Search (onglet dans nav principale)
+- [x] Frontend : barre de recherche globale (texte libre)
+- [x] Frontend : onglets Teams / Players
+- [x] Frontend : filtre par ville (picker)
+- [x] Frontend : filtre par position (GK/DEF/MID/ATT) pour joueurs
+- [x] Frontend : carte équipe (logo, nom, ville, W/D/L, nb joueurs, bouton Consulter)
+- [x] Frontend : carte joueur (photo, nom, position, ville, rating, MOTM, bouton Consulter)
+- [x] Frontend : état vide + état chargement

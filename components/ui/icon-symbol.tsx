@@ -47,6 +47,8 @@ const MAPPING = {
   "person.badge.minus": "person-remove",
   "clock.fill": "access-time",
   "flame.fill": "local-fire-department",
+  "arrow.right.square.fill": "logout",
+  "arrow.up.right.square": "open-in-new",
 } as IconMapping;
 
 /**

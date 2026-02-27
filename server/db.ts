@@ -168,6 +168,35 @@ export async function searchTeams(query: string) {
   return db.select().from(teams).where(sql`${teams.name} LIKE ${`%${query}%`}`).limit(20);
 }
 
+export async function searchTeamsAdvanced(query: string, city?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (query) conditions.push(or(like(teams.name, `%${query}%`), like(teams.city, `%${query}%`)));
+  if (city) conditions.push(eq(teams.city, city));
+  const rows = conditions.length > 0
+    ? await db.select().from(teams).where(and(...conditions)).orderBy(desc(teams.totalMatches)).limit(30)
+    : await db.select().from(teams).orderBy(desc(teams.totalMatches)).limit(30);
+  // Enrich with member count
+  const enriched = await Promise.all(rows.map(async (t) => {
+    const members = await db!.select().from(players).where(eq(players.teamId, t.id));
+    return { ...t, memberCount: members.length };
+  }));
+  return enriched;
+}
+
+export async function searchPlayersAdvanced(query: string, city?: string, position?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions: any[] = [];
+  if (query) conditions.push(or(like(players.fullName, `%${query}%`), like(players.city, `%${query}%`)));
+  if (city) conditions.push(eq(players.city, city));
+  if (position) conditions.push(eq(players.position, position as any));
+  return conditions.length > 0
+    ? db.select().from(players).where(and(...conditions)).orderBy(desc(players.totalPoints)).limit(40)
+    : db.select().from(players).orderBy(desc(players.totalPoints)).limit(40);
+}
+
 export async function deleteTeam(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

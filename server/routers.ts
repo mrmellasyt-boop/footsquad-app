@@ -770,7 +770,24 @@ export const appRouter = router({
     }),
   }),
 
-   // ─── REFERENCE DATA ───
+   // ─── SEARCH ───
+  search: router({
+    teams: publicProcedure.input(z.object({
+      query: z.string().default(""),
+      city: z.string().optional(),
+    })).query(async ({ input }) => {
+      return db.searchTeamsAdvanced(input.query, input.city);
+    }),
+    players: publicProcedure.input(z.object({
+      query: z.string().default(""),
+      city: z.string().optional(),
+      position: z.enum(["GK", "DEF", "MID", "ATT"]).optional(),
+    })).query(async ({ input }) => {
+      return db.searchPlayersAdvanced(input.query, input.city, input.position);
+    }),
+  }),
+
+  // ─── REFERENCE DATA ───
   ref: router({
     cities: publicProcedure.query(() => db.getPredefinedCities()),
     countries: publicProcedure.query(() => db.getCountries()),
