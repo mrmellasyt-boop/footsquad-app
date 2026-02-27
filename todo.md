@@ -62,3 +62,17 @@
 - [x] Create Post modal form (city, position, available time, preferred format, optional note)
 - [x] Post appears in free agents list with all fields
 - [x] Free agent detail screen with Message and Invite actions
+
+## Fix Join Match Flow + Roster + Captain Approval
+
+- [x] Schema: add teamSide (A/B) to match_players, add joinStatus (pending/approved/declined) to match_players
+- [x] Schema: maxPlayers field is per team (5v5 = 5 per team, not 10 total)
+- [x] Backend: join route asks teamSide, creates pending join request, notifies captain
+- [x] Backend: captain approve/decline join request route
+- [x] Backend: roster query returns players per team with photo + name
+- [x] Backend: disable join when team roster is full (>= maxPlayersPerTeam)
+- [x] Frontend: Join button shows team selection modal (Team A / Team B)
+- [x] Frontend: pending join request shows "Awaiting Approval" state
+- [x] Frontend: captain sees pending requests with Accept/Decline buttons
+- [x] Frontend: Match Detail shows both team rosters (name + photo) clearly
+- [x] Frontend: full team shows "Team Full" badge, join disabled

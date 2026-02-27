@@ -177,15 +177,20 @@ export const appRouter = router({
     getById: publicProcedure.input(z.object({ id: z.number() })).query(async ({ input }) => {
       const match = await db.getMatchById(input.id);
       if (!match) return null;
-      const matchPlayersList = await db.getMatchPlayers(input.id);
+      const allMatchPlayers = await db.getMatchPlayers(input.id);
       const teamA = match.teamAId ? await db.getTeamById(match.teamAId) : null;
       const teamB = match.teamBId ? await db.getTeamById(match.teamBId) : null;
-      // Get player details for roster
-      const playerDetails = await Promise.all(matchPlayersList.map(async (mp) => {
+      // Build rosters per side with player details
+      const enriched = await Promise.all(allMatchPlayers.map(async (mp) => {
         const p = await db.getPlayerById(mp.playerId);
         return { ...mp, player: p };
       }));
-      return { ...match, teamA, teamB, players: playerDetails };
+      const rosterA = enriched.filter(mp => mp.teamSide === "A" && mp.joinStatus === "approved");
+      const rosterB = enriched.filter(mp => mp.teamSide === "B" && mp.joinStatus === "approved");
+      const pendingRequests = enriched.filter(mp => mp.joinStatus === "pending");
+      const countA = rosterA.length;
+      const countB = rosterB.length;
+      return { ...match, teamA, teamB, rosterA, rosterB, pendingRequests, countA, countB, players: enriched };
     }),
     upcoming: publicProcedure.input(z.object({ city: z.string().optional() })).query(async ({ input }) => {
       const matchList = await db.getUpcomingMatches(input.city);
@@ -216,15 +221,79 @@ export const appRouter = router({
         return { ...m, teamA, teamB };
       }));
     }),
-    join: protectedProcedure.input(z.object({ matchId: z.number(), teamId: z.number() })).mutation(async ({ ctx, input }) => {
+    join: protectedProcedure.input(z.object({
+      matchId: z.number(),
+      teamId: z.number(),
+      teamSide: z.enum(["A", "B"]),
+    })).mutation(async ({ ctx, input }) => {
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) throw new Error("Create player profile first");
       const match = await db.getMatchById(input.matchId);
       if (!match) throw new Error("Match not found");
-      const count = await db.getMatchPlayerCount(input.matchId);
-      if (count >= match.maxPlayers) throw new Error("Match is full");
-      await db.addPlayerToMatch(input.matchId, player.id, input.teamId);
+      // Check per-team limit
+      const sideCount = await db.getMatchPlayerCountBySide(input.matchId, input.teamSide);
+      if (sideCount >= match.maxPlayersPerTeam) throw new Error(`Team ${input.teamSide} is full`);
+      // Check if player already in this match
+      const existing = await db.getMatchPlayers(input.matchId);
+      if (existing.some(mp => mp.playerId === player.id)) throw new Error("Already in this match");
+      // Add as pending - captain must approve
+      await db.addPlayerToMatch(input.matchId, player.id, input.teamId, input.teamSide, "pending");
+      // Notify the team captain
+      const team = await db.getTeamById(input.teamId);
+      if (team) {
+        const captain = await db.getPlayerById(team.captainId);
+        if (captain) {
+          await db.createNotification(
+            captain.id,
+            "join_request",
+            `Join Request: ${player.fullName}`,
+            `${player.fullName} wants to join your team (${team.name}) for the match on ${new Date(match.matchDate).toLocaleDateString()}.`,
+            JSON.stringify({ matchId: input.matchId, playerId: player.id, teamSide: input.teamSide })
+          );
+        }
+      }
+      return { success: true, status: "pending" };
+    }),
+    approveJoin: protectedProcedure.input(z.object({
+      matchId: z.number(),
+      playerId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain) throw new Error("Only captains can approve");
+      await db.updateMatchPlayerStatus(input.matchId, input.playerId, "approved");
+      // Notify the player
+      await db.createNotification(
+        input.playerId,
+        "join_approved",
+        "Join Request Approved!",
+        `Your request to join the match has been approved. You're in the roster!`,
+        JSON.stringify({ matchId: input.matchId })
+      );
       return { success: true };
+    }),
+    declineJoin: protectedProcedure.input(z.object({
+      matchId: z.number(),
+      playerId: z.number(),
+    })).mutation(async ({ ctx, input }) => {
+      const captain = await db.getPlayerByUserId(ctx.user.id);
+      if (!captain || !captain.isCaptain) throw new Error("Only captains can decline");
+      await db.updateMatchPlayerStatus(input.matchId, input.playerId, "declined");
+      // Notify the player
+      await db.createNotification(
+        input.playerId,
+        "join_declined",
+        "Join Request Declined",
+        `Your request to join the match was declined by the captain.`,
+        JSON.stringify({ matchId: input.matchId })
+      );
+      return { success: true };
+    }),
+    myJoinStatus: protectedProcedure.input(z.object({ matchId: z.number() })).query(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player) return null;
+      const allPlayers = await db.getMatchPlayers(input.matchId);
+      const entry = allPlayers.find(mp => mp.playerId === player.id);
+      return entry ? { status: entry.joinStatus, teamSide: entry.teamSide } : null;
     }),
     requestToPlay: protectedProcedure.input(z.object({ matchId: z.number() })).mutation(async ({ ctx, input }) => {
       const player = await db.getPlayerByUserId(ctx.user.id);

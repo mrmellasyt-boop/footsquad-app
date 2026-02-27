@@ -204,10 +204,24 @@ export async function updateMatch(id: number, data: Partial<InsertMatch>) {
 }
 
 // ─── MATCH PLAYERS ───
-export async function addPlayerToMatch(matchId: number, playerId: number, teamId: number) {
+export async function addPlayerToMatch(
+  matchId: number,
+  playerId: number,
+  teamId: number,
+  teamSide: "A" | "B" = "A",
+  joinStatus: "pending" | "approved" | "declined" = "approved"
+) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(matchPlayers).values({ matchId, playerId, teamId });
+  await db.insert(matchPlayers).values({ matchId, playerId, teamId, teamSide, joinStatus });
+}
+
+export async function updateMatchPlayerStatus(matchId: number, playerId: number, joinStatus: "pending" | "approved" | "declined") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(matchPlayers)
+    .set({ joinStatus })
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.playerId, playerId)));
 }
 
 export async function getMatchPlayers(matchId: number) {
@@ -216,11 +230,42 @@ export async function getMatchPlayers(matchId: number) {
   return db.select().from(matchPlayers).where(eq(matchPlayers.matchId, matchId));
 }
 
+export async function getMatchPlayersBySide(matchId: number, teamSide: "A" | "B") {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(matchPlayers)
+    .where(and(
+      eq(matchPlayers.matchId, matchId),
+      eq(matchPlayers.teamSide, teamSide),
+      eq(matchPlayers.joinStatus, "approved")
+    ));
+}
+
 export async function getMatchPlayerCount(matchId: number) {
   const db = await getDb();
   if (!db) return 0;
-  const result = await db.select({ count: sql<number>`count(*)` }).from(matchPlayers).where(eq(matchPlayers.matchId, matchId));
+  const result = await db.select({ count: sql<number>`count(*)` }).from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.joinStatus, "approved")));
   return result[0]?.count ?? 0;
+}
+
+export async function getMatchPlayerCountBySide(matchId: number, teamSide: "A" | "B") {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`count(*)` }).from(matchPlayers)
+    .where(and(
+      eq(matchPlayers.matchId, matchId),
+      eq(matchPlayers.teamSide, teamSide),
+      eq(matchPlayers.joinStatus, "approved")
+    ));
+  return result[0]?.count ?? 0;
+}
+
+export async function getPendingJoinRequests(matchId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(matchPlayers)
+    .where(and(eq(matchPlayers.matchId, matchId), eq(matchPlayers.joinStatus, "pending")));
 }
 
 // ─── MATCH REQUESTS ───

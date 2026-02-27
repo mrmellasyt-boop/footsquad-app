@@ -64,6 +64,7 @@ export const matches = mysqlTable("matches", {
   matchDate: timestamp("matchDate").notNull(),
   format: mysqlEnum("format", ["5v5", "8v8", "11v11"]).notNull(),
   maxPlayers: int("maxPlayers").notNull(),
+  maxPlayersPerTeam: int("maxPlayersPerTeam").notNull().default(5),
   teamAId: int("teamAId").notNull(),
   teamBId: int("teamBId"),
   scoreA: int("scoreA"),
@@ -82,6 +83,8 @@ export const matchPlayers = mysqlTable("match_players", {
   matchId: int("matchId").notNull(),
   playerId: int("playerId").notNull(),
   teamId: int("teamId").notNull(),
+  teamSide: mysqlEnum("teamSide", ["A", "B"]).notNull().default("A"),
+  joinStatus: mysqlEnum("joinStatus", ["pending", "approved", "declined"]).notNull().default("approved"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

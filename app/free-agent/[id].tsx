@@ -43,7 +43,7 @@ export default function FreeAgentDetailScreen() {
         { text: "Cancel", style: "cancel" },
         {
           text: "Invite",
-          onPress: () => joinMutation.mutate({ matchId, teamId }),
+          onPress: () => joinMutation.mutate({ matchId, teamId, teamSide: "A" }),
         },
       ]
     );
