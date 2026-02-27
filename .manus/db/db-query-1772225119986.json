@@ -1,0 +1,31 @@
+{
+  "query": "SELECT n.id, n.playerId, n.type, n.title, n.message FROM notifications n LEFT JOIN players p ON n.playerId = p.id WHERE p.id IS NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nFQKwthWdG3fpb.root --database Y4PCeNWNUZAwiWRqW9iqRW --execute SELECT n.id, n.playerId, n.type, n.title, n.message FROM notifications n LEFT JOIN players p ON n.playerId = p.id WHERE p.id IS NULL;",
+  "rows": [
+    {
+      "id": "150003",
+      "playerId": "420023",
+      "type": "join_request",
+      "title": "Match Confirmed - Join Now! ⚽",
+      "message": "Your team has a confirmed friendly match on 2/28/2026. Tap to join the roster!"
+    },
+    {
+      "id": "150004",
+      "playerId": "420031",
+      "type": "join_request",
+      "title": "Match Confirmed - Join Now! ⚽",
+      "message": "Your team has a confirmed friendly match on 2/28/2026. Tap to join the roster!"
+    },
+    {
+      "id": "150005",
+      "playerId": "420012",
+      "type": "join_request",
+      "title": "Match Confirmed - Join Now! ⚽",
+      "message": "Your team has a confirmed friendly match on 2/28/2026. Tap to join the roster!"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tplayerId\ttype\ttitle\tmessage\n150003\t420023\tjoin_request\tMatch Confirmed - Join Now! ⚽\tYour team has a confirmed friendly match on 2/28/2026. Tap to join the roster!\n150004\t420031\tjoin_request\tMatch Confirmed - Join Now! ⚽\tYour team has a confirmed friendly match on 2/28/2026. Tap to join the roster!\n150005\t420012\tjoin_request\tMatch Confirmed - Join Now! ⚽\tYour team has a confirmed friendly match on 2/28/2026. Tap to join the roster!\n",
+  "stderr": "",
+  "execution_time_ms": 61
+}

@@ -297,6 +297,8 @@ export default function MatchDetailScreen() {
   const pendingRequests: any[] = (match.pendingRequests ?? []);
   const allPlayers = [...rosterA, ...rosterB];
   const opponentPlayers = player?.teamId === match.teamAId ? rosterB : rosterA;
+  // FIX: captain rates OWN team players (including himself) - backend enforces this
+  const myTeamRosterPlayers = player?.teamId === match.teamAId ? rosterA : rosterB;
   const votablePlayers = allPlayers.filter((p: any) => p.id !== player?.id);
 
   const maxPerTeam = match.maxPlayersPerTeam ?? 5;
@@ -632,7 +634,7 @@ export default function MatchDetailScreen() {
             {match.status === "completed" && isAuthenticated && (
               <View style={styles.postMatchSection}>
                 <Text style={styles.sectionTitle}>Post-Match</Text>
-                {!hasRated && opponentPlayers.length > 0 && (
+                {!hasRated && myTeamRosterPlayers.length > 0 && (
                   <TouchableOpacity style={styles.actionBtn} onPress={() => setShowRating(true)}>
                     <IconSymbol name="star.fill" size={20} color="#FFD700" />
                     <Text style={styles.actionBtnText}>Rate Opponents</Text>
@@ -665,7 +667,7 @@ export default function MatchDetailScreen() {
         )}
       />
 
-      {showRating && <RatingModal matchId={matchId} players={opponentPlayers} onClose={() => setShowRating(false)} />}
+      {showRating && <RatingModal matchId={matchId} players={myTeamRosterPlayers} onClose={() => setShowRating(false)} />}
       {showMotm && <MotmModal matchId={matchId} players={votablePlayers} onClose={() => setShowMotm(false)} />}
       {showTeamSelect && match && (
         <TeamSelectModal

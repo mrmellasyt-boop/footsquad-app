@@ -268,6 +268,27 @@ export async function getPlayerMatches(playerId: number) {
     .sort((a, b) => new Date(b.matchDate).getTime() - new Date(a.matchDate).getTime());
 }
 
+export async function getMatchesAsTeamB(teamId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(matches)
+    .where(and(eq(matches.teamBId, teamId), ne(matches.status, "cancelled")))
+    .orderBy(desc(matches.matchDate));
+}
+
+export async function expirePendingMatches() {
+  const db = await getDb();
+  if (!db) return [];
+  const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
+  const expired = await db.select().from(matches)
+    .where(and(eq(matches.status, "pending"), lt(matches.createdAt, cutoff)));
+  if (expired.length > 0) {
+    await db.update(matches).set({ status: "cancelled" })
+      .where(and(eq(matches.status, "pending"), lt(matches.createdAt, cutoff)));
+  }
+  return expired;
+}
+
 export async function updateMatch(id: number, data: Partial<InsertMatch>) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

@@ -276,3 +276,37 @@
 - [x] Upload logo équipe via GalleryPicker (sans rebuild APK)
 - [x] Upload highlight photo/vidéo via GalleryPicker (sans rebuild APK)
 - [x] Tests mis à jour pour GalleryPicker
+
+## Fix Bugs v6 (Session 5)
+
+- [ ] Fix Challenges : bouton "Créer un Défi" manquant pour les capitaines
+- [ ] Fix Accept Invitation : capitaine adverse auto-ajouté au match après accept + notification à tous les joueurs des 2 équipes
+- [ ] Fix Double Invitation : seul le capitaine de la bonne équipe reçoit l'invitation (pas les 2 capitaines)
+- [ ] Fix Follow : feedback visuel immédiat (couleur change sans rechargement)
+- [ ] Fix Match accepté : visible dans la page Matches (pas seulement Home)
+- [ ] Fix Expiration match : matchs sans réponse expirent après 24h + notification au créateur
+- [ ] Fix Rating : capitaine inclus dans le budget de notation (budget = tous les joueurs incl. capitaine)
+- [ ] Fix Join Team : invitation envoyée uniquement au capitaine de la bonne équipe
+
+## Bugs corrigés (27 Feb 2026)
+
+- [x] Fix bouton Créer Challenge manquant (condition hasActiveChallenge corrigée)
+- [x] Fix capitaine adverse auto-ajouté au match après acceptInvitation + acceptRequest
+- [x] Fix notifications à tous les joueurs des 2 équipes après confirmation du match
+- [x] Fix join team → notification uniquement au capitaine de la bonne équipe
+- [x] Fix Follow avec feedback visuel optimiste (couleur change immédiatement)
+- [x] Fix match accepté visible dans la page Matches (getMatchesAsTeamB ajouté)
+- [x] Fix expiration 24h matchs sans réponse (expirePendingMatches + notification créateur)
+- [x] Fix rating : capitaine note ses propres joueurs (pas les adversaires)
+
+## Bugs corrigés (27 Feb 2026 - Session 5)
+
+- [x] Fix bouton Créer Challenge manquant (condition hasActiveChallenge corrigée)
+- [x] Fix capitaine adverse auto-ajouté au match après acceptInvitation + acceptRequest
+- [x] Fix notifications à tous les joueurs des 2 équipes après confirmation du match
+- [x] Fix join team → notification uniquement au capitaine de la bonne équipe
+- [x] Fix Follow avec feedback visuel optimiste (couleur change immédiatement)
+- [x] Fix match accepté visible dans la page Matches (getMatchesAsTeamB ajouté)
+- [x] Fix expiration 24h matchs sans réponse (expirePendingMatches + notification créateur)
+- [x] Fix rating : capitaine note ses propres joueurs (pas les adversaires)
+- [x] Fix upload photo : GalleryPicker remplace expo-image-picker sans rebuild APK

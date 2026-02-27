@@ -1,3 +1,4 @@
+import React from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, FlatList } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
@@ -13,10 +14,27 @@ export default function PlayerDetailScreen() {
   const { isAuthenticated } = useAuth();
 
   const { data: player, isLoading } = trpc.player.getById.useQuery({ id: playerId });
+  const utils = trpc.useUtils();
   const { data: isFollowing } = trpc.follow.isFollowing.useQuery({ playerId }, { enabled: isAuthenticated });
   const { data: followers } = trpc.follow.followers.useQuery({ playerId });
   const { data: following } = trpc.follow.following.useQuery({ playerId });
-  const followMutation = trpc.follow.toggle.useMutation();
+  const [optimisticFollowing, setOptimisticFollowing] = React.useState<boolean | null>(null);
+  const displayFollowing = optimisticFollowing !== null ? optimisticFollowing : !!isFollowing;
+  const followMutation = trpc.follow.toggle.useMutation({
+    onMutate: () => {
+      // Optimistic update: toggle immediately
+      setOptimisticFollowing(!displayFollowing);
+    },
+    onSuccess: (data) => {
+      setOptimisticFollowing(data.following);
+      utils.follow.isFollowing.invalidate({ playerId });
+      utils.follow.followers.invalidate({ playerId });
+    },
+    onError: () => {
+      // Revert on error
+      setOptimisticFollowing(null);
+    },
+  });
 
   if (isLoading) {
     return <ScreenContainer><View style={styles.center}><ActivityIndicator size="large" color="#39FF14" /></View></ScreenContainer>;
@@ -59,11 +77,12 @@ export default function PlayerDetailScreen() {
             {isAuthenticated && (
               <View style={styles.actionRow}>
                 <TouchableOpacity
-                  style={[styles.followBtn, isFollowing && styles.followingBtn]}
+                  style={[styles.followBtn, displayFollowing && styles.followingBtn]}
                   onPress={() => followMutation.mutate({ playerId })}
+                  disabled={followMutation.isPending}
                 >
-                  <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
-                    {isFollowing ? "Following" : "Follow"}
+                  <Text style={[styles.followBtnText, displayFollowing && styles.followingBtnText]}>
+                    {displayFollowing ? "Following" : "Follow"}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity

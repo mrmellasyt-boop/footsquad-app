@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FlatList, Text, View, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
@@ -17,10 +17,19 @@ export default function MatchesScreen() {
   const t = useT();
 
   const { data: publicMatches, isLoading: loadingPublic } = trpc.match.publicFeed.useQuery(undefined, { refetchOnWindowFocus: true });
-  const { data: myMatches, isLoading: loadingMine } = trpc.match.myMatches.useQuery(undefined, {
+  const { data: myMatches, isLoading: loadingMine, refetch: refetchMine } = trpc.match.myMatches.useQuery(undefined, {
     enabled: isAuthenticated,
     refetchOnWindowFocus: true,
   });
+  const expireMutation = trpc.match.expirePending.useMutation({
+    onSuccess: () => refetchMine(),
+  });
+  // Auto-expire pending matches older than 24h when screen loads
+  useEffect(() => {
+    if (isAuthenticated) {
+      expireMutation.mutate();
+    }
+  }, [isAuthenticated]);
 
   const currentData = activeTab === "public" ? publicMatches : myMatches;
   const isLoading = activeTab === "public" ? loadingPublic : loadingMine;

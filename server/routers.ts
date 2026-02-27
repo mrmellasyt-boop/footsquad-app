@@ -112,7 +112,20 @@ export const appRouter = router({
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) throw new Error("Create player profile first");
       if (player.teamId) throw new Error("Already in a team");
+      const targetTeam = await db.getTeamById(input.teamId);
+      if (!targetTeam) throw new Error("Team not found");
+      // Add player to team immediately (captain can remove later)
       await db.updatePlayer(player.id, { teamId: input.teamId, isFreeAgent: false });
+      // Notify ONLY the captain of the target team
+      if (targetTeam.captainId) {
+        await db.createNotification(
+          targetTeam.captainId,
+          "join_request",
+          "New Player Joined! ⚽",
+          `${player.fullName} has joined your team ${targetTeam.name}. You can remove them from the team page if needed.`,
+          JSON.stringify({ playerId: player.id, teamId: input.teamId })
+        );
+      }
       return { success: true };
     }),
     leave: protectedProcedure.mutation(async ({ ctx }) => {
@@ -223,6 +236,23 @@ export const appRouter = router({
       const countB = rosterB.length;
       return { ...match, teamA, teamB, rosterA, rosterB, pendingRequests, countA, countB, players: enriched };
     }),
+    expirePending: protectedProcedure.mutation(async ({ ctx }) => {
+      // Expire matches that have been pending for more than 24 hours
+      const expired = await db.expirePendingMatches();
+      for (const m of expired) {
+        // Notify the creator
+        if (m.createdBy) {
+          await db.createNotification(
+            m.createdBy,
+            "match_expired",
+            "Match Expired ⏰",
+            "Your match invitation had no response after 24 hours. Consider contacting the opponent directly.",
+            JSON.stringify({ matchId: m.id })
+          );
+        }
+      }
+      return { expired: expired.length };
+    }),
     upcoming: publicProcedure.input(z.object({ city: z.string().optional() })).query(async ({ input }) => {
       const matchList = await db.getUpcomingMatches(input.city);
       // Enrich with team data
@@ -246,7 +276,14 @@ export const appRouter = router({
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) return [];
       const matchList = await db.getPlayerMatches(player.id);
-      return Promise.all(matchList.map(async (m) => {
+      // FIX: also include matches where player is captain of teamB (accepted invitation)
+      const captainTeamBMatches = player.isCaptain && player.teamId
+        ? await db.getMatchesAsTeamB(player.teamId)
+        : [];
+      const allMatches = [...matchList, ...captainTeamBMatches];
+      const seen = new Set<number>();
+      const deduped = allMatches.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+      return Promise.all(deduped.map(async (m) => {
         const teamA = m.teamAId ? await db.getTeamById(m.teamAId) : null;
         const teamB = m.teamBId ? await db.getTeamById(m.teamBId) : null;
         return { ...m, teamA, teamB };
@@ -382,18 +419,39 @@ export const appRouter = router({
         for (const other of otherPending) {
           await db.updateMatchRequest(other.id, "rejected");
         }
-        // Notify the accepted team captain
+        // Auto-add accepted team captain to match (Team B side) + notify all members
         const acceptedTeam = await db.getTeamById(accepted.teamId);
         if (acceptedTeam?.captainId) {
+          const existingPlayers = await db.getMatchPlayers(input.matchId);
+          const alreadyIn = existingPlayers.some((mp: any) => mp.playerId === acceptedTeam.captainId);
+          if (!alreadyIn) {
+            await db.addPlayerToMatch(input.matchId, acceptedTeam.captainId, accepted.teamId, "B", "approved");
+          }
           const match = await db.getMatchById(input.matchId);
           const creatorTeam = match?.teamAId ? await db.getTeamById(match.teamAId) : null;
           await db.createNotification(
             acceptedTeam.captainId,
             "play_request_accepted",
-            "Challenge Accepted!",
+            "Challenge Accepted! ✅",
             `${creatorTeam?.name ?? "The team"} accepted your challenge request. Match is confirmed!`,
             JSON.stringify({ matchId: input.matchId })
           );
+          // Notify ALL players of BOTH teams to join the match
+          const teamAMembers = match?.teamAId ? await db.getTeamMembers(match.teamAId) : [];
+          const teamBMembers = await db.getTeamMembers(accepted.teamId);
+          const allMembers = [...teamAMembers, ...teamBMembers];
+          for (const member of allMembers) {
+            if (!member.userId) continue;
+            if (member.userId === ctx.user.id) continue; // skip creator captain (already knows)
+            if (member.userId === acceptedTeam.captainId) continue; // skip accepted captain (already notified)
+            await db.createNotification(
+              member.userId,
+              "join_request",
+              "Match Confirmed - Join Now! ⚽",
+              `Your team has a confirmed match on ${new Date(match?.matchDate ?? Date.now()).toLocaleDateString()}. Tap to join the roster!`,
+              JSON.stringify({ matchId: input.matchId })
+            );
+          }
         }
       }
       return { success: true };
@@ -462,6 +520,12 @@ export const appRouter = router({
       // Accept: set teamB + confirm match
       await db.updateMatchRequest(invite.id, "accepted");
       await db.updateMatch(input.matchId, { teamBId: player.teamId, status: "confirmed" });
+      // Auto-add accepting captain to match (Team B side)
+      const existingMatchPlayers = await db.getMatchPlayers(input.matchId);
+      const captainAlreadyIn = existingMatchPlayers.some((mp: any) => mp.playerId === player.id);
+      if (!captainAlreadyIn && player.teamId) {
+        await db.addPlayerToMatch(input.matchId, player.id, player.teamId, "B", "approved");
+      }
       // Decline other pending invites
       const others = requests.filter((r: any) => r.id !== invite.id && r.status === "pending");
       for (const other of others) await db.updateMatchRequest(other.id, "rejected");
