@@ -139,7 +139,12 @@ export default function CreateMatchScreen() {
         <Text style={styles.title}>Create Match</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.form}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+      <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         {/* Match Type - Friendly only (Public challenges use the Challenges tab) */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Match Type</Text>
@@ -285,6 +290,7 @@ export default function CreateMatchScreen() {
           )}
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* ── Date Picker (iOS inline / Android modal) ── */}
       {showDatePicker && (

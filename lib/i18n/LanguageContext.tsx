@@ -1,7 +1,16 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { I18nManager } from "react-native";
+import { I18nManager, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { translations, Language, TranslationKeys } from "./translations";
+// Use Updates for reload on native; fallback gracefully on web
+let reloadApp: (() => void) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const Updates = require("expo-updates");
+  reloadApp = () => Updates.reloadAsync().catch(() => {});
+} catch {
+  reloadApp = null;
+}
 
 const STORAGE_KEY = "@footsquad_language";
 
@@ -25,24 +34,34 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((saved) => {
       if (saved && (saved === "en" || saved === "ar" || saved === "fr")) {
-        applyLanguage(saved as Language, false);
+        // Apply RTL silently on boot (no reload needed — app is starting fresh)
+        const shouldBeRTL = saved === "ar";
+        if (I18nManager.isRTL !== shouldBeRTL) {
+          I18nManager.allowRTL(shouldBeRTL);
+          I18nManager.forceRTL(shouldBeRTL);
+        }
+        setLanguageState(saved as Language);
       }
     });
   }, []);
 
-  const applyLanguage = (lang: Language, persist = true) => {
-    setLanguageState(lang);
-    const shouldBeRTL = lang === "ar";
-    if (I18nManager.isRTL !== shouldBeRTL) {
-      I18nManager.forceRTL(shouldBeRTL);
-    }
-    if (persist) {
-      AsyncStorage.setItem(STORAGE_KEY, lang);
-    }
-  };
-
   const setLanguage = async (lang: Language) => {
-    applyLanguage(lang, true);
+    await AsyncStorage.setItem(STORAGE_KEY, lang);
+    setLanguageState(lang);
+
+    const shouldBeRTL = lang === "ar";
+    const rtlChanged = I18nManager.isRTL !== shouldBeRTL;
+
+    if (rtlChanged) {
+      // Must forceRTL then reload for layout direction to take effect
+      I18nManager.allowRTL(shouldBeRTL);
+      I18nManager.forceRTL(shouldBeRTL);
+      // On native: reload app so RN re-renders with correct direction
+      if (Platform.OS !== "web" && reloadApp) {
+        // Small delay so AsyncStorage write completes
+        setTimeout(() => { reloadApp?.(); }, 300);
+      }
+    }
   };
 
   const isRTL = language === "ar";

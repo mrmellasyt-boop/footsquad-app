@@ -43,7 +43,11 @@ export default function DirectMessageScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView style={styles.chatContainer} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <KeyboardAvoidingView
+        style={styles.chatContainer}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
         {isLoading ? (
           <View style={styles.center}><ActivityIndicator size="large" color="#39FF14" /></View>
         ) : (

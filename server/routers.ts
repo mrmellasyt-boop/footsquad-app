@@ -274,16 +274,18 @@ export const appRouter = router({
       }
       // Add as pending - captain must approve
       await db.addPlayerToMatch(input.matchId, player.id, input.teamId, input.teamSide, "pending");
-      // Notify the team captain
-      const team = await db.getTeamById(input.teamId);
+      // Notify the correct team captain based on teamSide
+      const teamIdForSide = input.teamSide === "A" ? match.teamAId : match.teamBId;
+      const notifyTeamId = teamIdForSide ?? input.teamId;
+      const team = notifyTeamId != null ? await db.getTeamById(notifyTeamId as number) : null;
       if (team) {
         const captain = await db.getPlayerById(team.captainId);
         if (captain) {
           await db.createNotification(
             captain.id,
             "join_request",
-            `Join Request: ${player.fullName}`,
-            `${player.fullName} wants to join your team (${team.name}) for the match on ${new Date(match.matchDate).toLocaleDateString()}.`,
+            `⚽ Join Request: ${player.fullName}`,
+            `${player.fullName} wants to join your team (${team.name}) for the match on ${new Date(match.matchDate).toLocaleDateString()}. Tap to approve or decline.`,
             JSON.stringify({ matchId: input.matchId, playerId: player.id, teamSide: input.teamSide })
           );
         }

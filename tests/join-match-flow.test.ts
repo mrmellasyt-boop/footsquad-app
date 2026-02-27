@@ -63,7 +63,7 @@ describe("Fix Join Match Flow + Roster + Captain Approval", () => {
 
     it("match.join creates pending status and notifies captain", () => {
       const joinIdx = routersContent.indexOf("join: protectedProcedure.input(z.object({\n      matchId: z.number(),\n      teamId: z.number(),\n      teamSide");
-      const joinBlock = routersContent.slice(joinIdx, joinIdx + 1800);
+      const joinBlock = routersContent.slice(joinIdx, joinIdx + 2500);
       expect(joinBlock).toContain('"pending"');
       expect(joinBlock).toContain("createNotification");
       expect(joinBlock).toContain("join_request");

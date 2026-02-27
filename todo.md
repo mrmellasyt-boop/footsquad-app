@@ -233,3 +233,12 @@
 - [x] Frontend : notifications.tsx - bouton "Accept" inline sur les notifs de type match_invitation
 - [x] Frontend : après Accept dans notif, naviguer directement vers le match confirmé
 - [x] Frontend : match/[id].tsx - supprimer le double Accept, une seule confirmation suffit
+
+## Fix Bugs v4
+
+- [ ] Fix RTL : désactiver proprement quand langue change AR → EN/FR (forceRTL false + reload)
+- [ ] Fix notification capitaine : notif immédiate quand joueur fait demande de join match
+- [ ] Fix clavier Login : KeyboardAvoidingView pour que le formulaire reste visible
+- [ ] Fix clavier Signup : KeyboardAvoidingView
+- [ ] Fix clavier Messages : scroll vers le bas quand clavier s'ouvre
+- [ ] Fix clavier Create Match : KeyboardAvoidingView
