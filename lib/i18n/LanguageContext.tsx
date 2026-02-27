@@ -1,16 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { I18nManager, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { translations, Language, TranslationKeys } from "./translations";
-// Use Updates for reload on native; fallback gracefully on web
-let reloadApp: (() => void) | null = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Updates = require("expo-updates");
-  reloadApp = () => Updates.reloadAsync().catch(() => {});
-} catch {
-  reloadApp = null;
-}
 
 const STORAGE_KEY = "@footsquad_language";
 
@@ -34,12 +24,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((saved) => {
       if (saved && (saved === "en" || saved === "ar" || saved === "fr")) {
-        // Apply RTL silently on boot (no reload needed — app is starting fresh)
-        const shouldBeRTL = saved === "ar";
-        if (I18nManager.isRTL !== shouldBeRTL) {
-          I18nManager.allowRTL(shouldBeRTL);
-          I18nManager.forceRTL(shouldBeRTL);
-        }
         setLanguageState(saved as Language);
       }
     });
@@ -48,23 +32,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLanguage = async (lang: Language) => {
     await AsyncStorage.setItem(STORAGE_KEY, lang);
     setLanguageState(lang);
-
-    const shouldBeRTL = lang === "ar";
-    const rtlChanged = I18nManager.isRTL !== shouldBeRTL;
-
-    if (rtlChanged) {
-      // Must forceRTL then reload for layout direction to take effect
-      I18nManager.allowRTL(shouldBeRTL);
-      I18nManager.forceRTL(shouldBeRTL);
-      // On native: reload app so RN re-renders with correct direction
-      if (Platform.OS !== "web" && reloadApp) {
-        // Small delay so AsyncStorage write completes
-        setTimeout(() => { reloadApp?.(); }, 300);
-      }
-    }
+    // RTL is intentionally disabled — Arabic is displayed LTR in this app
   };
 
-  const isRTL = language === "ar";
+  // RTL always false — no RTL support in this app
+  const isRTL = false;
   const t = translations[language] as TranslationKeys;
 
   return (

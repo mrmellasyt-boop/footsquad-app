@@ -602,10 +602,18 @@ export const appRouter = router({
       if (alreadyRated) throw new Error("Already rated");
       const match = await db.getMatchById(input.matchId);
       if (!match || !match.ratingsOpen) throw new Error("Ratings are not open for this match");
-      // Verify rating only opponents
+      // Verify rater is an approved player in this match
       const matchPlayersList = await db.getMatchPlayers(input.matchId);
-      const myTeamPlayers = matchPlayersList.filter(mp => mp.teamId === player.teamId).map(mp => mp.playerId);
-      const opponents = matchPlayersList.filter(mp => mp.teamId !== player.teamId && mp.joinStatus === "approved");
+      const myMatchEntry = matchPlayersList.find(mp => mp.playerId === player.id && mp.joinStatus === "approved");
+      if (!myMatchEntry) throw new Error("You are not an approved player in this match");
+      // Only captain can rate (captain = team's captainId)
+      const myTeam = myMatchEntry.teamId === match.teamAId
+        ? await db.getTeamById(match.teamAId!)
+        : await db.getTeamById(match.teamBId!);
+      if (!myTeam || myTeam.captainId !== player.id) throw new Error("Only the captain can submit ratings");
+      // Verify rating only opponents (not own team)
+      const myTeamPlayers = matchPlayersList.filter(mp => mp.teamId === myMatchEntry.teamId).map(mp => mp.playerId);
+      const opponents = matchPlayersList.filter(mp => mp.teamId !== myMatchEntry.teamId && mp.joinStatus === "approved");
       for (const r of input.ratings) {
         if (myTeamPlayers.includes(r.playerId)) throw new Error("Cannot rate own teammates");
         if (r.playerId === player.id) throw new Error("Cannot rate yourself");
@@ -667,9 +675,10 @@ export const appRouter = router({
       if (!match || !match.motmVotingOpen) throw new Error("MOTM voting is not open for this match");
       const alreadyVoted = await db.hasPlayerVotedMotm(input.matchId, player.id);
       if (alreadyVoted) throw new Error("Already voted");
-      // Verify voted player is in the match (either team)
+      // Verify voter AND voted player are both approved players in this match
       const matchPlayersList = await db.getMatchPlayers(input.matchId);
       const allPlayerIds = matchPlayersList.filter(mp => mp.joinStatus === "approved").map(mp => mp.playerId);
+      if (!allPlayerIds.includes(player.id)) throw new Error("You are not a player in this match");
       if (!allPlayerIds.includes(input.votedPlayerId)) throw new Error("Voted player is not in this match");
       await db.submitMotmVote(input.matchId, player.id, input.votedPlayerId);
       // Check if all eligible players have voted — if so, finalize winner

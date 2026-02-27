@@ -249,3 +249,10 @@
 - [x] Expiration notifications : supprimer les notifs > 30 jours auto à l'ouverture de la page
 - [x] Compression images avant upload (expo-image-manipulator, max 1080px, 80% quality)
 - [x] Compression vidéos : quality 0.7 + max 30s dans ImagePicker
+
+## Fix Bugs v5
+
+- [x] Fix ImageLoader : ajouter expo-image-picker plugin dans app.config.ts
+- [x] Fix MOTM : seuls les joueurs approuvés du match peuvent voter (vérification voter + voté)
+- [x] Fix Rating : seul le capitaine approuvé du match peut soumettre les ratings de l'équipe adverse
+- [x] Supprimer RTL complètement de l'app (I18nManager retiré, arabe affiché en LTR)
