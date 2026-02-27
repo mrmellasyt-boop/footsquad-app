@@ -97,27 +97,46 @@ function navigateFromNotif(router: ReturnType<typeof useRouter>, notif: any) {
   }
 }
 
-function NotifCard({ item, onAccept, onPress }: {
+// Determine which action buttons to show inline for a notification type
+function getInlineActions(type: string): { accept: boolean; decline: boolean } {
+  switch (type) {
+    case "match_invite":    // Friendly match invitation → Accept / Decline
+      return { accept: true, decline: true };
+    case "play_request":    // Public challenge request → Accept / Decline (captain of match creator)
+      return { accept: true, decline: true };
+    case "join_request":    // Player wants to join match roster → Approve / Decline
+      return { accept: true, decline: true };
+    default:
+      return { accept: false, decline: false };
+  }
+}
+
+function NotifCard({
+  item,
+  onAccept,
+  onDecline,
+  onPress,
+  isActing,
+}: {
   item: any;
-  onAccept?: (matchId: number) => void;
+  onAccept?: (data: { matchId?: number; requestId?: number; playerId?: number }) => void;
+  onDecline?: (data: { matchId?: number; requestId?: number; playerId?: number }) => void;
   onPress: () => void;
+  isActing?: boolean;
 }) {
   const iconName = getNotifIcon(item.type) as any;
   const iconColor = getNotifColor(item.type);
-  const isInvite = item.type === "match_invite";
+  const actions = getInlineActions(item.type);
 
-  let matchId: number | null = null;
-  try {
-    const data = item.data ? JSON.parse(item.data) : {};
-    matchId = data.matchId ?? null;
-  } catch { /* ignore */ }
+  let parsedData: any = {};
+  try { parsedData = item.data ? JSON.parse(item.data) : {}; } catch { /* ignore */ }
 
-  const hasNavigation = matchId != null || (() => {
-    try {
-      const data = item.data ? JSON.parse(item.data) : {};
-      return !!(data.highlightId || data.followerId);
-    } catch { return false; }
-  })();
+  const matchId: number | undefined = parsedData.matchId ?? undefined;
+  const requestId: number | undefined = parsedData.requestId ?? undefined;
+  const playerId: number | undefined = parsedData.playerId ?? undefined;
+
+  const hasNavigation = !!(matchId || parsedData.highlightId || parsedData.followerId);
+  const showActions = (actions.accept || actions.decline) && !isActing;
 
   return (
     <TouchableOpacity
@@ -135,24 +154,46 @@ function NotifCard({ item, onAccept, onPress }: {
         </View>
         <Text style={styles.notifBody} numberOfLines={2}>{item.message}</Text>
 
-        {/* Inline Accept button for match invitations */}
-        {isInvite && matchId != null && onAccept && (
+        {/* Loading state while action is in progress */}
+        {isActing && (
+          <View style={styles.actingRow}>
+            <ActivityIndicator size="small" color="#39FF14" />
+            <Text style={styles.actingText}>Processing...</Text>
+          </View>
+        )}
+
+        {/* Inline Accept / Decline buttons */}
+        {showActions && (
           <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={styles.acceptBtn}
-              onPress={(e) => {
-                e.stopPropagation?.();
-                onAccept(matchId!);
-              }}
-            >
-              <IconSymbol name="checkmark.circle.fill" size={14} color="#0A0A0A" />
-              <Text style={styles.acceptBtnText}>Accept Match</Text>
-            </TouchableOpacity>
+            {actions.accept && onAccept && (
+              <TouchableOpacity
+                style={styles.acceptBtn}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onAccept({ matchId, requestId, playerId });
+                }}
+              >
+                <IconSymbol name="checkmark.circle.fill" size={14} color="#0A0A0A" />
+                <Text style={styles.acceptBtnText}>Accept</Text>
+              </TouchableOpacity>
+            )}
+            {actions.decline && onDecline && (
+              <TouchableOpacity
+                style={styles.declineBtn}
+                onPress={(e) => {
+                  e.stopPropagation?.();
+                  onDecline({ matchId, requestId, playerId });
+                }}
+              >
+                <IconSymbol name="xmark.circle.fill" size={14} color="#FF4444" />
+                <Text style={styles.declineBtnText}>Decline</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={styles.viewBtn}
               onPress={onPress}
             >
-              <Text style={styles.viewBtnText}>View Details</Text>
+              <Text style={styles.viewBtnText}>View</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -161,7 +202,7 @@ function NotifCard({ item, onAccept, onPress }: {
           <Text style={styles.notifTime}>
             {new Date(item.createdAt).toLocaleDateString()} · {new Date(item.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </Text>
-          {!isInvite && hasNavigation && (
+          {!showActions && hasNavigation && (
             <Text style={styles.tapToView}>Tap to view →</Text>
           )}
         </View>
@@ -181,29 +222,71 @@ export default function NotificationsScreen() {
   const markAllMutation = trpc.notification.markAllRead.useMutation({ onSuccess: () => refetch() });
   const markOneMutation = trpc.notification.markRead.useMutation({ onSuccess: () => refetch() });
   const deleteExpiredMutation = trpc.notification.deleteExpired.useMutation();
+
   // Auto-delete expired notifications (>30 days) when page opens
   useEffect(() => {
     if (isAuthenticated) {
       deleteExpiredMutation.mutate();
     }
   }, [isAuthenticated]);
+
+  // ── Accept mutations ──
   const acceptInvitationMutation = trpc.match.acceptInvitation.useMutation({
     onSuccess: (data) => {
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       refetch();
       utils.match.myMatches.invalidate();
       utils.match.upcoming.invalidate();
-      // Navigate directly to the confirmed match
-      if (data.matchId) {
-        router.push(`/match/${data.matchId}` as any);
-      }
+      if (data.matchId) router.push(`/match/${data.matchId}` as any);
     },
     onError: (err) => Alert.alert("Error", err.message),
   });
 
-  const [acceptingMatchId, setAcceptingMatchId] = useState<number | null>(null);
+  const acceptRequestMutation = trpc.match.acceptRequest.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refetch();
+      utils.match.myMatches.invalidate();
+      utils.match.publicFeed.invalidate();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const approveJoinMutation = trpc.match.approveJoin.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  // ── Decline mutations ──
+  const declineInvitationMutation = trpc.match.declineInvitation.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const declineRequestMutation = trpc.match.declineRequest.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  const declineJoinMutation = trpc.match.declineJoin.useMutation({
+    onSuccess: () => {
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      refetch();
+    },
+    onError: (err) => Alert.alert("Error", err.message),
+  });
+
+  // Track which notification is currently being acted upon
+  const [actingNotifId, setActingNotifId] = useState<number | null>(null);
 
   // Sound player for notification (hooks must be called unconditionally)
   const soundPlayer = useAudioPlayer(Platform.OS !== "web" ? require("@/assets/sounds/notification.mp3") : null);
@@ -233,20 +316,37 @@ export default function NotificationsScreen() {
   }
 
   const handleNotifPress = (item: any) => {
-    if (!item.isRead) {
-      markOneMutation.mutate({ id: item.id });
-    }
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+    if (!item.isRead) markOneMutation.mutate({ id: item.id });
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigateFromNotif(router, item);
   };
 
-  const handleAcceptInvitation = (matchId: number) => {
-    setAcceptingMatchId(matchId);
-    acceptInvitationMutation.mutate({ matchId }, {
-      onSettled: () => setAcceptingMatchId(null),
-    });
+  const handleAccept = (notif: any, data: { matchId?: number; requestId?: number; playerId?: number }) => {
+    setActingNotifId(notif.id);
+    const done = () => setActingNotifId(null);
+    if (notif.type === "match_invite" && data.matchId) {
+      acceptInvitationMutation.mutate({ matchId: data.matchId }, { onSettled: done });
+    } else if (notif.type === "play_request" && data.requestId && data.matchId) {
+      acceptRequestMutation.mutate({ requestId: data.requestId, matchId: data.matchId }, { onSettled: done });
+    } else if (notif.type === "join_request" && data.matchId && data.playerId) {
+      approveJoinMutation.mutate({ matchId: data.matchId, playerId: data.playerId }, { onSettled: done });
+    } else {
+      done();
+    }
+  };
+
+  const handleDecline = (notif: any, data: { matchId?: number; requestId?: number; playerId?: number }) => {
+    setActingNotifId(notif.id);
+    const done = () => setActingNotifId(null);
+    if (notif.type === "match_invite" && data.matchId) {
+      declineInvitationMutation.mutate({ matchId: data.matchId }, { onSettled: done });
+    } else if (notif.type === "play_request" && data.requestId) {
+      declineRequestMutation.mutate({ requestId: data.requestId }, { onSettled: done });
+    } else if (notif.type === "join_request" && data.matchId && data.playerId) {
+      declineJoinMutation.mutate({ matchId: data.matchId, playerId: data.playerId }, { onSettled: done });
+    } else {
+      done();
+    }
   };
 
   return (
@@ -275,27 +375,15 @@ export default function NotificationsScreen() {
           data={notifications}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
-          renderItem={({ item }) => {
-            let matchId: number | null = null;
-            try { matchId = item.data ? JSON.parse(item.data).matchId ?? null : null; } catch { /* ignore */ }
-            const isAccepting = acceptingMatchId === matchId && acceptInvitationMutation.isPending;
-
-            return (
-              <View>
-                {isAccepting && (
-                  <View style={styles.acceptingOverlay}>
-                    <ActivityIndicator size="small" color="#39FF14" />
-                    <Text style={styles.acceptingText}>Confirming match...</Text>
-                  </View>
-                )}
-                <NotifCard
-                  item={item}
-                  onPress={() => handleNotifPress(item)}
-                  onAccept={item.type === "match_invite" ? handleAcceptInvitation : undefined}
-                />
-              </View>
-            );
-          }}
+          renderItem={({ item }) => (
+            <NotifCard
+              item={item}
+              onPress={() => handleNotifPress(item)}
+              onAccept={(data) => handleAccept(item, data)}
+              onDecline={(data) => handleDecline(item, data)}
+              isActing={actingNotifId === item.id}
+            />
+          )}
         />
       )}
     </ScreenContainer>
@@ -326,22 +414,27 @@ const styles = StyleSheet.create({
   notifFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 6 },
   notifTime: { color: "#555", fontSize: 11 },
   tapToView: { color: "#39FF14", fontSize: 11, fontWeight: "600" },
-  // Inline action buttons for match_invite
-  actionRow: { flexDirection: "row", gap: 8, marginTop: 10 },
+  // Loading state
+  actingRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, paddingVertical: 6 },
+  actingText: { color: "#39FF14", fontSize: 13, fontWeight: "600" },
+  // Inline action buttons
+  actionRow: { flexDirection: "row", gap: 6, marginTop: 10 },
   acceptBtn: {
-    flexDirection: "row", alignItems: "center", gap: 5,
-    backgroundColor: "#39FF14", paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, flex: 1, justifyContent: "center",
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "#39FF14", paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 18, flex: 1, justifyContent: "center",
   },
-  acceptBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 13 },
+  acceptBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 12 },
+  declineBtn: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(255,68,68,0.12)", borderWidth: 1, borderColor: "#FF4444",
+    paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 18, flex: 1, justifyContent: "center",
+  },
+  declineBtnText: { color: "#FF4444", fontWeight: "800", fontSize: 12 },
   viewBtn: {
-    borderWidth: 1, borderColor: "#39FF14", paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, flex: 1, alignItems: "center",
+    borderWidth: 1, borderColor: "#2A2A2A", paddingHorizontal: 10, paddingVertical: 7,
+    borderRadius: 18, alignItems: "center", justifyContent: "center",
   },
-  viewBtnText: { color: "#39FF14", fontWeight: "700", fontSize: 13 },
-  acceptingOverlay: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "rgba(57,255,20,0.1)", borderRadius: 10, padding: 8, marginBottom: 4,
-  },
-  acceptingText: { color: "#39FF14", fontSize: 13, fontWeight: "600" },
+  viewBtnText: { color: "#8A8A8A", fontWeight: "600", fontSize: 12 },
 });

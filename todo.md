@@ -310,3 +310,9 @@
 - [x] Fix expiration 24h matchs sans réponse (expirePendingMatches + notification créateur)
 - [x] Fix rating : capitaine note ses propres joueurs (pas les adversaires)
 - [x] Fix upload photo : GalleryPicker remplace expo-image-picker sans rebuild APK
+
+## Bouton Decline inline dans les notifications
+
+- [x] Bouton "Decline" inline dans NotifCard pour match_invite (friendly)
+- [x] Bouton "Decline" inline dans NotifCard pour play_request (public match challenge)
+- [x] Bouton "Decline" inline dans NotifCard pour join_request (joueur veut rejoindre le match)

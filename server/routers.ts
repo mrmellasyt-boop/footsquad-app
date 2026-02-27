@@ -562,6 +562,34 @@ export const appRouter = router({
       return { success: true, matchId: input.matchId };
     }),
 
+    declineInvitation: protectedProcedure.input(z.object({ matchId: z.number() })).mutation(async ({ ctx, input }) => {
+      const player = await db.getPlayerByUserId(ctx.user.id);
+      if (!player || !player.isCaptain) throw new Error("Only captains can decline invitations");
+      const match = await db.getMatchById(input.matchId);
+      if (!match) throw new Error("Match not found");
+      if (match.type !== "friendly") throw new Error("Only friendly match invitations can be declined this way");
+      // Find the pending invite for this captain's team
+      const requests = await db.getMatchRequests(input.matchId);
+      const invite = requests.find((r: any) => r.teamId === player.teamId && r.status === "pending");
+      if (!invite) throw new Error("No pending invitation found for your team");
+      // Decline the invite
+      await db.updateMatchRequest(invite.id, "rejected");
+      // Notify the match creator
+      const teamAId: number | null = match.teamAId ?? null;
+      const creatorTeam = teamAId != null ? await db.getTeamById(teamAId as number) : null;
+      const decliningTeam = player.teamId != null ? await db.getTeamById(player.teamId as number) : null;
+      if (creatorTeam?.captainId) {
+        await db.createNotification(
+          creatorTeam.captainId,
+          "match_declined",
+          "Invitation Declined \u274c",
+          `${decliningTeam?.name ?? "The team"} declined your friendly match invitation.`,
+          JSON.stringify({ matchId: input.matchId })
+        );
+      }
+      return { success: true };
+    }),
+
     submitScore: protectedProcedure.input(z.object({
       matchId: z.number(),
       scoreA: z.number().int().min(0),
