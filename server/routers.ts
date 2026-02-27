@@ -164,13 +164,15 @@ export const appRouter = router({
       const player = await db.getPlayerByUserId(ctx.user.id);
       if (!player) throw new Error("Create player profile first");
       if (!player.isCaptain || !player.teamId) throw new Error("Only team captains can create matches");
+      // Friendly matches start as 'pending' (awaiting opponent acceptance)
+      // Public matches start as 'pending' (awaiting a challenger via requestToPlay)
       const id = await db.createMatch({
         ...input,
         matchDate: new Date(input.matchDate),
         teamAId: player.teamId,
-        teamBId: input.teamBId ?? null,
+        teamBId: null, // teamBId is NEVER set at creation — only after opponent accepts
         createdBy: player.id,
-        status: input.type === "friendly" && input.teamBId ? "pending" : "pending",
+        status: "pending",
       });
       return { id };
     }),
@@ -383,13 +385,27 @@ export const appRouter = router({
       if (!player || !player.isCaptain) throw new Error("Only captains can invite teams");
       const match = await db.getMatchById(input.matchId);
       if (!match) throw new Error("Match not found");
-      if (match.teamBId) throw new Error("Match already has an opponent");
+      if (match.type !== "friendly") throw new Error("Only friendly matches can be invited");
+      // Check if match already has a CONFIRMED opponent (teamBId set)
+      if (match.teamBId) throw new Error("Match already has a confirmed opponent");
+      // Check if this team already has a pending invite for this match
+      const existingRequests = await db.getMatchRequests(input.matchId);
+      if (existingRequests.some((r: any) => r.teamId === input.teamId && r.status === "pending")) {
+        throw new Error("This team already has a pending invite");
+      }
       const targetTeam = await db.getTeamById(input.teamId);
       if (!targetTeam) throw new Error("Team not found");
       await db.createMatchRequest(input.matchId, input.teamId);
       // Notify opponent captain
       if (targetTeam.captainId) {
-        await db.createNotification(targetTeam.captainId, "match_invite", "Match Invitation", `Your team has been invited to a friendly match`, JSON.stringify({ matchId: input.matchId }));
+        const creatorTeam = match.teamAId ? await db.getTeamById(match.teamAId) : null;
+        await db.createNotification(
+          targetTeam.captainId,
+          "match_invite",
+          "Friendly Match Invitation",
+          `${creatorTeam?.name ?? "A team"} has invited your team to a friendly match on ${new Date(match.matchDate).toLocaleDateString()}`,
+          JSON.stringify({ matchId: input.matchId })
+        );
       }
       return { success: true };
     }),

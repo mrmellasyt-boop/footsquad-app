@@ -304,12 +304,16 @@ export default function MatchDetailScreen() {
 
   // Request to Play logic (public matches without opponent)
   const isPublicMatch = match.type === "public";
+  const isFriendlyMatch = match.type === "friendly";
   const hasNoOpponent = !match.teamBId;
   const isOtherCaptain = player?.isCaptain && player?.teamId && player.teamId !== match.teamAId;
   const myTeamAlreadyRequested = (matchRequests ?? []).some((r: any) => r.teamId === player?.teamId && r.status === "pending");
   const canRequestToPlay = isAuthenticated && isPublicMatch && hasNoOpponent && isOtherCaptain && !myTeamAlreadyRequested && matchActive;
-  // Creator captain sees pending play requests
+  // Creator captain sees pending play requests (public) or pending invites (friendly)
   const pendingPlayRequests = isCaptainOfTeamA && isPublicMatch ? (matchRequests ?? []).filter((r: any) => r.status === "pending") : [];
+  const pendingFriendlyInvites = isCaptainOfTeamA && isFriendlyMatch ? (matchRequests ?? []).filter((r: any) => r.status === "pending") : [];
+  // Is creator of this friendly match waiting for response
+  const isCreatorWaitingForInvite = isCaptainOfTeamA && isFriendlyMatch && hasNoOpponent && pendingFriendlyInvites.length > 0;
 
   const handleJoinPress = () => {
     if (!player) return;
@@ -438,6 +442,36 @@ export default function MatchDetailScreen() {
                     >
                       <Text style={styles.declineSmallBtnText}>✕</Text>
                     </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Creator: Friendly invite sent, waiting for response */}
+            {isCreatorWaitingForInvite && (
+              <View style={styles.pendingBanner}>
+                <IconSymbol name="clock.fill" size={18} color="#FFD700" />
+                <Text style={styles.pendingBannerText}>Invitation sent — waiting for opponent captain to respond</Text>
+              </View>
+            )}
+
+            {/* Creator: Friendly invite pending — accept/decline by invited team */}
+            {isCaptainOfTeamA && isFriendlyMatch && pendingFriendlyInvites.length > 0 && (
+              <View style={styles.pendingSection}>
+                <Text style={styles.sectionTitle}>Pending Invitations ({pendingFriendlyInvites.length})</Text>
+                {pendingFriendlyInvites.map((r: any) => (
+                  <View key={r.id} style={styles.pendingRow}>
+                    <View style={styles.teamSelectLogo}>
+                      {r.team?.logoUrl ? (
+                        <Image source={{ uri: r.team.logoUrl }} style={styles.teamSelectLogoImg} contentFit="cover" />
+                      ) : (
+                        <IconSymbol name="shield.fill" size={20} color="#39FF14" />
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.pendingName}>{r.team?.name ?? "Unknown Team"}</Text>
+                      <Text style={styles.pendingSide}>Invitation pending...</Text>
+                    </View>
                   </View>
                 ))}
               </View>

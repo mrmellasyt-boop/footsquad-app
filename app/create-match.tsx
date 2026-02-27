@@ -56,6 +56,7 @@ export default function CreateMatchScreen() {
       Alert.alert("Select Opponent", "Please search and select an opponent team for the friendly match.");
       return;
     }
+    // NEVER pass teamBId at creation — opponent is set only after they accept the invite
     createMutation.mutate({
       type,
       city,
@@ -63,7 +64,6 @@ export default function CreateMatchScreen() {
       matchDate,
       format,
       maxPlayers: Number(maxPlayers),
-      teamBId: type === "friendly" && selectedTeam ? selectedTeam.id : undefined,
     });
   };
 

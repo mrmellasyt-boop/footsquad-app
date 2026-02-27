@@ -88,3 +88,16 @@
 - [x] Frontend: Challenge Request Sent banner after requesting
 - [x] Frontend: Creator captain sees pending play requests with Accept/Decline
 - [x] Home: only confirmed matches with two teams shown (22 tests passed)
+
+## Fix Friendly Match Invite Flow
+
+- [x] Backend: createMatch friendly never sets teamBId at creation, starts as pending
+- [x] Backend: inviteTeam checks confirmed opponent (not pending), prevents duplicate invites, notifies captain
+- [x] Backend: acceptRequest sets teamBId + status = confirmed (friendly)
+- [x] Backend: getPublicMatches excludes friendly matches entirely
+- [x] Backend: getUpcomingMatches excludes unconfirmed friendly matches
+- [x] Backend: getPlayerMatches includes matches created by captain (even without roster entry)
+- [x] Frontend: create-match.tsx sends invite after creation (not at creation)
+- [x] Frontend: match/[id].tsx shows 'Invitation sent' banner for creator waiting
+- [x] Frontend: match/[id].tsx shows Pending Invitations section for friendly creator
+- [x] Frontend: invited team captain sees Accept/Decline card (18 tests passed)
