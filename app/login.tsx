@@ -5,9 +5,11 @@ import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Api from "@/lib/_core/api";
 import * as Auth from "@/lib/_core/auth";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const t = useT();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,15 +20,15 @@ export default function LoginScreen() {
   const handleSubmit = async () => {
     setError("");
     if (!email.trim() || !password.trim()) {
-      setError("Email and password are required");
+      setError(t.auth.emailPasswordRequired);
       return;
     }
     if (mode === "signup" && !name.trim()) {
-      setError("Name is required");
+      setError(t.auth.nameRequired);
       return;
     }
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t.auth.passwordTooShort);
       return;
     }
 
@@ -39,7 +41,6 @@ export default function LoginScreen() {
         result = await Api.login(email.trim(), password);
       }
 
-      // Store session token and user info
       if (result.sessionToken) {
         await Auth.setSessionToken(result.sessionToken);
       }
@@ -54,14 +55,13 @@ export default function LoginScreen() {
         });
       }
 
-      // Also establish session cookie for web
       if (Platform.OS === "web" && result.sessionToken) {
         await Api.establishSession(result.sessionToken);
       }
 
       router.replace("/(tabs)/profile");
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || t.auth.somethingWentWrong);
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export default function LoginScreen() {
             </View>
             <Text style={styles.title}>FOOTSQUAD</Text>
             <Text style={styles.subtitle}>
-              {mode === "login" ? "Welcome back!" : "Create your account"}
+              {mode === "login" ? t.auth.welcomeBack : t.auth.createAccount}
             </Text>
 
             {/* Toggle */}
@@ -94,13 +94,13 @@ export default function LoginScreen() {
                 style={[styles.toggleBtn, mode === "login" && styles.toggleBtnActive]}
                 onPress={() => { setMode("login"); setError(""); }}
               >
-                <Text style={[styles.toggleText, mode === "login" && styles.toggleTextActive]}>Login</Text>
+                <Text style={[styles.toggleText, mode === "login" && styles.toggleTextActive]}>{t.auth.login}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.toggleBtn, mode === "signup" && styles.toggleBtnActive]}
                 onPress={() => { setMode("signup"); setError(""); }}
               >
-                <Text style={[styles.toggleText, mode === "signup" && styles.toggleTextActive]}>Sign Up</Text>
+                <Text style={[styles.toggleText, mode === "signup" && styles.toggleTextActive]}>{t.auth.signUp}</Text>
               </TouchableOpacity>
             </View>
 
@@ -109,7 +109,7 @@ export default function LoginScreen() {
               {mode === "signup" && (
                 <TextInput
                   style={styles.input}
-                  placeholder="Full Name"
+                  placeholder={t.profile.fullName}
                   placeholderTextColor="#555"
                   value={name}
                   onChangeText={setName}
@@ -119,7 +119,7 @@ export default function LoginScreen() {
               )}
               <TextInput
                 style={styles.input}
-                placeholder="Email"
+                placeholder={t.auth.email}
                 placeholderTextColor="#555"
                 value={email}
                 onChangeText={setEmail}
@@ -130,7 +130,7 @@ export default function LoginScreen() {
               />
               <TextInput
                 style={styles.input}
-                placeholder="Password"
+                placeholder={t.auth.password}
                 placeholderTextColor="#555"
                 value={password}
                 onChangeText={setPassword}
@@ -150,7 +150,7 @@ export default function LoginScreen() {
                   <ActivityIndicator color="#0A0A0A" />
                 ) : (
                   <Text style={styles.submitBtnText}>
-                    {mode === "login" ? "Login" : "Create Account"}
+                    {mode === "login" ? t.auth.login : t.auth.createAccountBtn}
                   </Text>
                 )}
               </TouchableOpacity>

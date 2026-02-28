@@ -139,6 +139,10 @@ export const translations = {
       wins: "Wins",
       members: "Members",
       filterPosition: "Position",
+      follow: "Follow",
+      following: "Following",
+      unfollow: "Unfollow",
+      lookingForTeam: "Looking for a team",
     },
 
     // ─── Leaderboard ───
@@ -244,6 +248,21 @@ export const translations = {
       title: "Notifications",
       noNotifications: "No notifications yet",
       markAllRead: "Mark all as read",
+    },
+
+    // ─── Auth ───
+    auth: {
+      login: "Login",
+      signUp: "Sign Up",
+      welcomeBack: "Welcome back!",
+      createAccount: "Create your account",
+      createAccountBtn: "Create Account",
+      email: "Email",
+      password: "Password",
+      emailPasswordRequired: "Email and password are required",
+      nameRequired: "Name is required",
+      passwordTooShort: "Password must be at least 6 characters",
+      somethingWentWrong: "Something went wrong",
     },
 
     // ─── Language Names ───
@@ -475,6 +494,19 @@ export const translations = {
       noNotifications: "Aucune notification",
       markAllRead: "Tout marquer comme lu",
     },
+    auth: {
+      login: "Connexion",
+      signUp: "S'inscrire",
+      welcomeBack: "Bon retour !",
+      createAccount: "Créer ton compte",
+      createAccountBtn: "Créer un compte",
+      email: "Email",
+      password: "Mot de passe",
+      emailPasswordRequired: "Email et mot de passe requis",
+      nameRequired: "Le nom est requis",
+      passwordTooShort: "Le mot de passe doit contenir au moins 6 caractères",
+      somethingWentWrong: "Une erreur est survenue",
+    },
     languages: {
       en: "English",
       ar: "العربية",
@@ -607,6 +639,10 @@ export const translations = {
       wins: "انتصارات",
       members: "أعضاء",
       filterPosition: "المركز",
+      follow: "متابعة",
+      following: "تتابع",
+      unfollow: "إلغاء المتابعة",
+      lookingForTeam: "يبحث عن فريق",
     },
     leaderboard: {
       title: "الترتيب",
@@ -702,6 +738,19 @@ export const translations = {
       title: "الإشعارات",
       noNotifications: "لا توجد إشعارات",
       markAllRead: "تحديد الكل كمقروء",
+    },
+    auth: {
+      login: "تسجيل الدخول",
+      signUp: "إنشاء حساب",
+      welcomeBack: "مرحباً بعودتك!",
+      createAccount: "إنشاء حسابك",
+      createAccountBtn: "إنشاء حساب",
+      email: "البريد الإلكتروني",
+      password: "كلمة المرور",
+      emailPasswordRequired: "البريد الإلكتروني وكلمة المرور مطلوبان",
+      nameRequired: "الاسم مطلوب",
+      passwordTooShort: "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل",
+      somethingWentWrong: "حدث خطأ ما",
     },
     languages: {
       en: "English",

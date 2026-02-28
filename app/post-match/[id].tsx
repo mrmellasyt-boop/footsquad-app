@@ -8,11 +8,13 @@ import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useColors } from "@/hooks/use-colors";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function PostMatchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const matchId = Number(id);
   const router = useRouter();
+  const t = useT();
   const colors = useColors();
 
   const [step, setStep] = useState<"score" | "motm" | "rating" | "done">("score");

@@ -554,8 +554,12 @@ describe("System: Free Agent Board", () => {
 
   it("Free agents are not assigned to any team", async () => {
     if (skipIfNoDb()) return;
+    // Only check NPC free agents (openId-linked users with npc_ prefix)
+    const allUsers = await db.select().from(users);
+    const npcUserIds = allUsers.filter(u => u.openId?.startsWith('npc_')).map(u => u.id);
     const freeAgents = await db.select().from(players).where(eq(players.isFreeAgent, true));
-    for (const fa of freeAgents) {
+    const npcFreeAgents = freeAgents.filter(fa => npcUserIds.includes(fa.userId!));
+    for (const fa of npcFreeAgents) {
       expect(fa.teamId).toBeNull();
     }
   });

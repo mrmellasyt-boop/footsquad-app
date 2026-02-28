@@ -333,3 +333,28 @@
 ## Bug rating capitaine B (27 Feb 2026)
 
 - [x] Fix rating : les 2 capitaines notent leurs propres joueurs (1-10) avec budget affiché, section conditionnée à isCaptainOfThisMatch
+
+## Bug incohérence de langue (28 Feb 2026)
+
+- [ ] Fix login/signup : mélange français/anglais — utiliser une seule langue de manière cohérente
+
+## Bug i18n incomplet (28 Feb 2026)
+
+- [ ] Fix i18n : tous les fichiers doivent utiliser useT() au lieu de textes en dur en anglais
+- [ ] Fix login.tsx : utiliser useT() pour tous les labels
+- [ ] Fix notifications.tsx : utiliser useT() pour tous les labels
+- [ ] Fix match/[id].tsx : utiliser useT() pour tous les labels
+- [ ] Fix challenges.tsx : utiliser useT() pour tous les labels
+- [ ] Fix team/[id].tsx : utiliser useT() pour tous les labels
+- [ ] Fix upload-highlight.tsx : utiliser useT() pour tous les labels
+- [ ] Fix create-match.tsx : utiliser useT() pour tous les labels
+- [ ] Fix player/[id].tsx : utiliser useT() pour tous les labels
+- [ ] Ajouter les clés manquantes dans translations.ts (EN/FR/AR)
+
+## Fix i18n complet (28 Feb 2026)
+
+- [x] Fix login.tsx : utilise useT() pour toutes les traductions (login/signup)
+- [x] Fix notifications.tsx : useT() ajouté dans le composant principal
+- [x] Fix 14 autres fichiers : useT() importé et textes en dur remplacés
+- [x] Ajout section auth dans translations.ts (EN/FR/AR)
+- [x] Test free agent corrigé pour filtrer uniquement les joueurs NPC

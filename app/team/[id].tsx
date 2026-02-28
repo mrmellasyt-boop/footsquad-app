@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import { GalleryPicker, type PickedAsset } from "@/components/gallery-picker";
 import * as Api from "@/lib/_core/api";
 import { compressTeamLogo } from "@/lib/media-compress";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 // ─── Stat Card ───
 function StatCard({ value, label, color = "#39FF14" }: { value: string | number; label: string; color?: string }) {
@@ -38,6 +39,7 @@ export default function TeamDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const teamId = Number(id);
   const router = useRouter();
+  const t = useT();
   const { isAuthenticated } = useAuth();
 
   const { data: team, isLoading, refetch: refetchTeam } = trpc.team.getById.useQuery(

@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { trpc } from "@/lib/trpc";
 import { Image } from "expo-image";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 // 2-column grid, 9:16 cards
@@ -17,6 +18,7 @@ const CARD_H = Math.round(CARD_W * (16 / 9));
 
 export default function AllHighlightsScreen() {
   const router = useRouter();
+  const t = useT();
   const [cityFilter, setCityFilter] = useState("");
   const [teamFilter, setTeamFilter] = useState("");
   const [showCityPicker, setShowCityPicker] = useState(false);

@@ -6,11 +6,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function FreeAgentDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const playerId = Number(id);
   const router = useRouter();
+  const t = useT();
   const { isAuthenticated } = useAuth();
 
   const { data: player, isLoading } = trpc.player.getById.useQuery({ id: playerId });

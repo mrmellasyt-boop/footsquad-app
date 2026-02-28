@@ -8,9 +8,11 @@ import { Image } from "expo-image";
 import * as Api from "@/lib/_core/api";
 import { compressImage } from "@/lib/media-compress";
 import { GalleryPicker, type PickedAsset } from "@/components/gallery-picker";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function UploadHighlightScreen() {
   const router = useRouter();
+  const t = useT();
   const [mediaUri, setMediaUri] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<"photo" | "video">("photo");
   const [uploading, setUploading] = useState(false);

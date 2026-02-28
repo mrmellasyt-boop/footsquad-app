@@ -5,11 +5,13 @@ import { trpc } from "@/lib/trpc";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function DirectMessageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const partnerId = Number(id);
   const router = useRouter();
+  const t = useT();
   const [message, setMessage] = useState("");
 
   const { data: partner } = trpc.player.getById.useQuery({ id: partnerId });

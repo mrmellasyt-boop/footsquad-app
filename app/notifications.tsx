@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import * as Haptics from "expo-haptics";
+import { useT } from "@/lib/i18n/LanguageContext";
 import { useAudioPlayer } from "expo-audio";
 
 // Map notification types to icons and navigation targets
@@ -231,6 +232,7 @@ function NotifCard({
 export default function NotificationsScreen() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const t = useT();
   const utils = trpc.useUtils();
   const { data: notifications, isLoading, refetch } = trpc.notification.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -256,7 +258,7 @@ export default function NotificationsScreen() {
       utils.match.upcoming.invalidate();
       if (data.matchId) router.push(`/match/${data.matchId}` as any);
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   const acceptRequestMutation = trpc.match.acceptRequest.useMutation({
@@ -266,7 +268,7 @@ export default function NotificationsScreen() {
       utils.match.myMatches.invalidate();
       utils.match.publicFeed.invalidate();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   const approveJoinMutation = trpc.match.approveJoin.useMutation({
@@ -274,7 +276,7 @@ export default function NotificationsScreen() {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   const approveTeamJoinMutation = trpc.team.approveTeamJoin.useMutation({
@@ -282,7 +284,7 @@ export default function NotificationsScreen() {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   const declineTeamJoinMutation = trpc.team.declineTeamJoin.useMutation({
@@ -290,7 +292,7 @@ export default function NotificationsScreen() {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   // ── Decline mutations ──
@@ -299,7 +301,7 @@ export default function NotificationsScreen() {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   const declineRequestMutation = trpc.match.declineRequest.useMutation({
@@ -307,7 +309,7 @@ export default function NotificationsScreen() {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   const declineJoinMutation = trpc.match.declineJoin.useMutation({
@@ -315,7 +317,7 @@ export default function NotificationsScreen() {
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       refetch();
     },
-    onError: (err) => Alert.alert("Error", err.message),
+    onError: (err) => Alert.alert(t.common.error, err.message),
   });
 
   // Track which notification is currently being acted upon

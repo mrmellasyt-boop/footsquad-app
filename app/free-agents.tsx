@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
 import { useAuth } from "@/hooks/use-auth";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const POSITIONS = ["GK", "DEF", "MID", "ATT"] as const;
 const FORMATS = ["5v5", "8v8", "11v11", "Any"];
@@ -16,6 +17,7 @@ export default function FreeAgentsScreen() {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showCreatePost, setShowCreatePost] = useState(false);
   const router = useRouter();
+  const t = useT();
   const { isAuthenticated } = useAuth();
 
   const { data: cities } = trpc.ref.cities.useQuery();

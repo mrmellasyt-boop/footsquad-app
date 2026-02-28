@@ -9,6 +9,7 @@ import { Image } from "expo-image";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/use-auth";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -16,6 +17,7 @@ export default function HighlightDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const highlightId = Number(id);
   const router = useRouter();
+  const t = useT();
   const { isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
   const [liked, setLiked] = useState(false);

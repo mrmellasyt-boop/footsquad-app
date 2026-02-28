@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 type Tab = "team" | "direct";
 
@@ -85,6 +86,7 @@ function TeamChatView() {
 function DirectMessagesView() {
   const { data: conversations, isLoading } = trpc.chat.conversations.useQuery();
   const router = useRouter();
+  const t = useT();
 
   if (isLoading) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#39FF14" /></View>;

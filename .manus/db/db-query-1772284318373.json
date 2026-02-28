@@ -1,0 +1,9 @@
+{
+  "query": "SELECT id, \"fullName\", \"teamId\", \"isFreeAgent\", \"openId\" FROM players WHERE \"isFreeAgent\" = true AND \"teamId\" IS NOT NULL;\nSELECT id, \"fullName\", \"teamId\", \"isFreeAgent\", \"openId\" FROM players WHERE \"teamId\" = 240003 AND \"isFreeAgent\" = true;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3nFQKwthWdG3fpb.root --database Y4PCeNWNUZAwiWRqW9iqRW --execute SELECT id, \"fullName\", \"teamId\", \"isFreeAgent\", \"openId\" FROM players WHERE \"isFreeAgent\" = true AND \"teamId\" IS NOT NULL;\nSELECT id, \"fullName\", \"teamId\", \"isFreeAgent\", \"openId\" FROM players WHERE \"teamId\" = 240003 AND \"isFreeAgent\" = true;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 63
+}

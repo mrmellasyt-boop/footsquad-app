@@ -4,9 +4,11 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function CreateTeamScreen() {
   const router = useRouter();
+  const t = useT();
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [showCityPicker, setShowCityPicker] = useState(false);

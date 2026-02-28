@@ -6,11 +6,13 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 export default function PlayerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const playerId = Number(id);
   const router = useRouter();
+  const t = useT();
   const { isAuthenticated } = useAuth();
 
   const { data: player, isLoading } = trpc.player.getById.useQuery({ id: playerId });
@@ -82,7 +84,7 @@ export default function PlayerDetailScreen() {
                   disabled={followMutation.isPending}
                 >
                   <Text style={[styles.followBtnText, displayFollowing && styles.followingBtnText]}>
-                    {displayFollowing ? "Following" : "Follow"}
+                    {displayFollowing ? t.explore.following : t.explore.follow}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -133,7 +135,7 @@ export default function PlayerDetailScreen() {
               <View style={styles.freeAgentBanner}>
                 <Text style={styles.freeAgentText}>FREE AGENT</Text>
                 <Text style={styles.freeAgentSub}>
-                  {player.availableTime ? `Available: ${player.availableTime}` : "Looking for a team"}
+                  {player.availableTime ? `${t.explore.follow}: ${player.availableTime}` : t.explore.lookingForTeam}
                   {player.preferredFormat ? ` • ${player.preferredFormat}` : ""}
                 </Text>
               </View>

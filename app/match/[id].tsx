@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Image } from "expo-image";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 // ─── Rating Modal ───
 function RatingModal({ matchId, players, onClose }: { matchId: number; players: any[]; onClose: () => void }) {
@@ -213,6 +214,7 @@ export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const matchId = Number(id);
   const router = useRouter();
+  const t = useT();
   const { isAuthenticated } = useAuth();
 
   const { data: match, isLoading, refetch } = trpc.match.getById.useQuery({ id: matchId }, { refetchOnWindowFocus: true });

@@ -5,6 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useT } from "@/lib/i18n/LanguageContext";
 
 function formatDate(d: Date): string {
   return d.toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" });
@@ -16,6 +17,7 @@ function formatTime(d: Date): string {
 
 export default function CreateMatchScreen() {
   const router = useRouter();
+  const t = useT();
   const [type, setType] = useState<"friendly">("friendly");
   const [city, setCity] = useState("");
   const [pitchName, setPitchName] = useState("");
