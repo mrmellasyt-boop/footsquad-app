@@ -186,6 +186,54 @@ export async function uploadFile(uri: string, mimeType: string): Promise<string>
   return data.url;
 }
 
+/**
+ * Upload a video with server-side trim via ffmpeg.
+ * If trimStart/trimEnd are provided, the server cuts the video before storing to S3.
+ * Falls back to regular upload if no trim params.
+ */
+export async function uploadVideoWithTrim(
+  uri: string,
+  mimeType: string,
+  trimStart?: number,
+  trimEnd?: number,
+): Promise<string> {
+  const baseUrl = getApiBaseUrl();
+  const hasTrim = typeof trimStart === "number" && typeof trimEnd === "number" && trimEnd > trimStart;
+
+  if (!hasTrim) {
+    // No trim needed — use regular upload endpoint
+    return uploadFile(uri, mimeType);
+  }
+
+  const url = new URL(`${baseUrl}/api/upload/video-trim`);
+  url.searchParams.set("trimStart", String(trimStart));
+  url.searchParams.set("trimEnd", String(trimEnd));
+
+  const response = await fetch(uri);
+  const blob = await response.blob();
+
+  const headers: Record<string, string> = { "Content-Type": mimeType };
+  if (Platform.OS !== "web") {
+    const token = await Auth.getSessionToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const uploadResponse = await fetch(url.toString(), {
+    method: "POST",
+    headers,
+    body: blob,
+    credentials: "include",
+  });
+
+  if (!uploadResponse.ok) {
+    const errText = await uploadResponse.text().catch(() => "unknown");
+    throw new Error(`Video trim upload failed: ${errText}`);
+  }
+
+  const data = await uploadResponse.json();
+  return data.url;
+}
+
 // Establish session cookie on the backend (3000-xxx domain)
 // Called after receiving token via postMessage to get a proper Set-Cookie from the backend
 export async function establishSession(token: string): Promise<boolean> {

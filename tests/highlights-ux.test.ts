@@ -132,3 +132,47 @@ describe("Fix Package 1: Highlights UX", () => {
     });
   });
 });
+
+// Video trim endpoint tests
+describe("Video Trim Endpoint", () => {
+  it("should have /api/upload/video-trim route registered in oauth.ts", () => {
+    const fs = require("fs");
+    const content = fs.readFileSync("server/_core/oauth.ts", "utf-8");
+    expect(content).toContain("/api/upload/video-trim");
+  });
+
+  it("should use ffmpeg with -ss and -t flags for trimming", () => {
+    const fs = require("fs");
+    const content = fs.readFileSync("server/_core/oauth.ts", "utf-8");
+    expect(content).toContain('"-ss"');
+    expect(content).toContain('"-t"');
+    expect(content).toContain('"-c", "copy"');
+  });
+
+  it("should clean up temp files after trim (finally block)", () => {
+    const fs = require("fs");
+    const content = fs.readFileSync("server/_core/oauth.ts", "utf-8");
+    expect(content).toContain("fs.unlinkSync(tmpInput)");
+    expect(content).toContain("fs.unlinkSync(tmpOutput)");
+  });
+
+  it("should export uploadVideoWithTrim from api.ts", () => {
+    const fs = require("fs");
+    const content = fs.readFileSync("lib/_core/api.ts", "utf-8");
+    expect(content).toContain("export async function uploadVideoWithTrim");
+  });
+
+  it("should fall back to regular upload when no trim params", () => {
+    const fs = require("fs");
+    const content = fs.readFileSync("lib/_core/api.ts", "utf-8");
+    expect(content).toContain("return uploadFile(uri, mimeType)");
+  });
+
+  it("should use trimStart/trimEnd in upload-highlight.tsx", () => {
+    const fs = require("fs");
+    const content = fs.readFileSync("app/upload-highlight.tsx", "utf-8");
+    expect(content).toContain("uploadVideoWithTrim");
+    expect(content).toContain("trimStart");
+    expect(content).toContain("trimEnd");
+  });
+});

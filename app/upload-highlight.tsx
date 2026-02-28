@@ -18,6 +18,8 @@ export default function UploadHighlightScreen() {
   const [uploading, setUploading] = useState(false);
   const [mimeType, setMimeType] = useState<string>("image/jpeg");
   const [pickerMode, setPickerMode] = useState<"photo" | "video" | null>(null);
+  const [trimStart, setTrimStart] = useState<number | undefined>(undefined);
+  const [trimEnd, setTrimEnd] = useState<number | undefined>(undefined);
 
   const createMutation = trpc.highlight.create.useMutation({
     onSuccess: () => {
@@ -34,15 +36,24 @@ export default function UploadHighlightScreen() {
     setMediaUri(asset.uri);
     setMediaType(asset.type);
     setMimeType(asset.mimeType);
+    // Store trim params for server-side ffmpeg trim
+    setTrimStart(asset.trimStart);
+    setTrimEnd(asset.trimEnd);
   };
 
   const handleUpload = async () => {
     if (!mediaUri) return;
     setUploading(true);
     try {
-      // Compress photos before upload (videos are already limited to 30s + quality 0.7)
-      const finalUri = mediaType === "photo" ? await compressImage(mediaUri) : mediaUri;
-      const url = await Api.uploadFile(finalUri, mimeType);
+      // Compress photos before upload
+      if (mediaType === "photo") {
+        const finalUri = await compressImage(mediaUri);
+        const url = await Api.uploadFile(finalUri, mimeType);
+        createMutation.mutate({ mediaUrl: url, mediaType });
+        return;
+      }
+      // Videos: use trim endpoint if trimStart/trimEnd are set (server-side ffmpeg)
+      const url = await Api.uploadVideoWithTrim(mediaUri, mimeType, trimStart, trimEnd);
       createMutation.mutate({ mediaUrl: url, mediaType });
     } catch (err: any) {
       Alert.alert("Upload Error", err.message || "Failed to upload file");

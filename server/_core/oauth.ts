@@ -6,6 +6,12 @@ import { sdk } from "./sdk";
 import bcrypt from "bcryptjs";
 import { storagePut } from "../storage";
 import crypto from "crypto";
+import { execFile } from "child_process";
+import { promisify } from "util";
+import fs from "fs";
+import os from "os";
+import path from "path";
+const execFileAsync = promisify(execFile);
 
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
@@ -271,6 +277,71 @@ export function registerOAuthRoutes(app: Express) {
       });
     } catch (error) {
       res.status(401).json({ error: "Not authenticated" });
+    }
+  });
+
+  // ─── VIDEO TRIM + UPLOAD ───
+  // Receives raw video body + query params: trimStart (seconds), trimEnd (seconds)
+  // Uses ffmpeg to cut the video server-side, then uploads the trimmed result to S3
+  app.post("/api/upload/video-trim", async (req: Request, res: Response) => {
+    let tmpInput: string | null = null;
+    let tmpOutput: string | null = null;
+    try {
+      const user = await sdk.authenticateRequest(req);
+      const contentType = req.headers["content-type"] || "video/mp4";
+      const trimStart = parseFloat((req.query["trimStart"] as string) || "0");
+      const trimEnd = parseFloat((req.query["trimEnd"] as string) || "0");
+
+      if (isNaN(trimStart) || isNaN(trimEnd) || trimEnd <= trimStart) {
+        res.status(400).json({ error: "Invalid trimStart/trimEnd parameters" });
+        return;
+      }
+
+      // Collect raw body
+      const chunks: Buffer[] = [];
+      await new Promise<void>((resolve, reject) => {
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", resolve);
+        req.on("error", reject);
+      });
+      const buffer = Buffer.concat(chunks);
+
+      if (buffer.length === 0) {
+        res.status(400).json({ error: "Empty video body" });
+        return;
+      }
+
+      // Write to temp file
+      const isQuicktime = contentType.includes("quicktime") || contentType.includes("mov");
+      const inExt = isQuicktime ? "mov" : "mp4";
+      tmpInput = path.join(os.tmpdir(), `footsquad-trim-in-${crypto.randomUUID()}.${inExt}`);
+      tmpOutput = path.join(os.tmpdir(), `footsquad-trim-out-${crypto.randomUUID()}.mp4`);
+      fs.writeFileSync(tmpInput, buffer);
+
+      // ffmpeg: -ss start -t duration -c copy (stream copy, fast, no re-encode)
+      const duration = trimEnd - trimStart;
+      await execFileAsync("ffmpeg", [
+        "-y",
+        "-ss", String(trimStart),
+        "-i", tmpInput,
+        "-t", String(duration),
+        "-c", "copy",
+        "-movflags", "+faststart",
+        tmpOutput,
+      ]);
+
+      const outputBuffer = fs.readFileSync(tmpOutput);
+      const fileKey = `uploads/${user.id}/videos/${crypto.randomUUID()}.mp4`;
+      const { url } = await storagePut(fileKey, outputBuffer, "video/mp4");
+
+      res.json({ url });
+    } catch (error: any) {
+      console.error("[VideoTrim] Failed:", error?.message || error);
+      res.status(500).json({ error: "Video trim failed" });
+    } finally {
+      // Clean up temp files
+      try { if (tmpInput) fs.unlinkSync(tmpInput); } catch { /* ignore */ }
+      try { if (tmpOutput) fs.unlinkSync(tmpOutput); } catch { /* ignore */ }
     }
   });
 
