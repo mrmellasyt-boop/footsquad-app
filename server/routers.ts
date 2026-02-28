@@ -303,8 +303,8 @@ export const appRouter = router({
         return { ...m, teamA, teamB, playerCount: count };
       }));
     }),
-    publicFeed: publicProcedure.query(async () => {
-      const matchList = await db.getPublicMatches();
+    publicFeed: publicProcedure.input(z.object({ city: z.string().optional() }).optional()).query(async ({ input }) => {
+      const matchList = await db.getPublicMatches(input?.city);
       return Promise.all(matchList.map(async (m) => {
         const teamA = m.teamAId ? await db.getTeamById(m.teamAId) : null;
         const teamB = m.teamBId ? await db.getTeamById(m.teamBId) : null;

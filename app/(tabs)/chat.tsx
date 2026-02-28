@@ -33,7 +33,7 @@ function TeamChatView() {
   return (
     <KeyboardAvoidingView
       style={styles.chatContainer}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior="padding"
       keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       {isLoading ? (
@@ -106,7 +106,7 @@ function DirectMessagesView() {
     <FlatList
       data={conversations}
       keyExtractor={(item) => item.id.toString()}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
       renderItem={({ item }) => (
         <TouchableOpacity
           style={styles.convRow}

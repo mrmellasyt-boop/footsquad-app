@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "800", marginTop: 16 },
   emptyDesc: { color: "#8A8A8A", fontSize: 14, textAlign: "center", marginTop: 8, lineHeight: 20 },
-  grid: { paddingHorizontal: 20, paddingBottom: 32, gap: GRID_GAP },
+  grid: { paddingHorizontal: 20, paddingBottom: 100, gap: GRID_GAP },
   gridCard: {
     borderRadius: 14, overflow: "hidden", backgroundColor: "#1A1A1A",
   },

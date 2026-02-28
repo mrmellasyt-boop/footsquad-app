@@ -232,17 +232,19 @@ export async function getUpcomingMatches(city?: string) {
   return db.select().from(matches).where(and(...conditions)).orderBy(asc(matches.matchDate)).limit(10);
 }
 
-export async function getPublicMatches() {
+export async function getPublicMatches(city?: string) {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
   // Matches screen: only confirmed matches with both teams assigned, not expired
+  const conditions = [
+    eq(matches.status, "confirmed"),
+    isNotNull(matches.teamBId),
+    gte(matches.matchDate, now),
+    ...(city ? [eq(matches.city, city)] : []),
+  ];
   return db.select().from(matches)
-    .where(and(
-      eq(matches.status, "confirmed"),
-      isNotNull(matches.teamBId),
-      gte(matches.matchDate, now)
-    ))
+    .where(and(...conditions))
     .orderBy(desc(matches.createdAt)).limit(50);
 }
 

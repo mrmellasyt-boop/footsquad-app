@@ -143,8 +143,8 @@ export default function CreateMatchScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+        behavior="padding"
+        keyboardVerticalOffset={0}
       >
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         {/* Match Type - Friendly only (Public challenges use the Challenges tab) */}
@@ -391,8 +391,8 @@ export default function CreateMatchScreen() {
       </Modal>
 
       {/* Team Search Modal */}
-      <Modal visible={showTeamSearch} transparent animationType="slide">
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <Modal visible={showTeamSearch} transparent animationType="slide" statusBarTranslucent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>

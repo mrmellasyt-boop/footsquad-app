@@ -240,7 +240,7 @@ export default function HomeScreen() {
       <FlatList
         data={[1]}
         keyExtractor={() => "home"}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={() => (
           <View>
             {/* Header */}

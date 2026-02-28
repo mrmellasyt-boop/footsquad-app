@@ -44,7 +44,7 @@ export default function LeaderboardScreen() {
         <FlatList
           data={players}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}
+          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}
           renderItem={({ item, index }) => {
             const avgRating = item.ratingCount > 0 ? (item.totalRatings / item.ratingCount).toFixed(1) : "—";
             return (

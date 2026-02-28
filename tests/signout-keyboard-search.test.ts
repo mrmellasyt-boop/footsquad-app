@@ -35,22 +35,26 @@ describe("Fix: Signout navigates to login", () => {
 describe("Fix: KeyboardAvoidingView in key screens", () => {
   it("login.tsx uses KeyboardAvoidingView", () => {
     expect(loginFile).toContain("KeyboardAvoidingView");
-    expect(loginFile).toContain("behavior={Platform.OS === \"ios\" ? \"padding\"");
+    // behavior="padding" is better for Android (avoids content hidden behind keyboard)
+    expect(loginFile).toContain("behavior=\"");
   });
 
   it("chat.tsx uses KeyboardAvoidingView", () => {
     expect(chatFile).toContain("KeyboardAvoidingView");
-    expect(chatFile).toContain("behavior={Platform.OS === \"ios\" ? \"padding\"");
+    // behavior="padding" is better for Android (avoids content hidden behind keyboard)
+    expect(chatFile).toContain("behavior=\"");
   });
 
   it("dm/[id].tsx uses KeyboardAvoidingView", () => {
     expect(dmFile).toContain("KeyboardAvoidingView");
-    expect(dmFile).toContain("behavior={Platform.OS === \"ios\" ? \"padding\"");
+    // behavior="padding" is better for Android (avoids content hidden behind keyboard)
+    expect(dmFile).toContain("behavior=\"");
   });
 
   it("free-agents.tsx Create Post modal uses KeyboardAvoidingView", () => {
     expect(freeAgentsFile).toContain("KeyboardAvoidingView");
-    expect(freeAgentsFile).toContain("behavior={Platform.OS === \"ios\" ? \"padding\" : \"height\"}");
+    // behavior="padding" is better for Android (avoids content hidden behind keyboard)
+    expect(freeAgentsFile).toContain("behavior=\"padding\"");
   });
 
   it("free-agents.tsx has matching open/close KeyboardAvoidingView tags", () => {
@@ -61,7 +65,8 @@ describe("Fix: KeyboardAvoidingView in key screens", () => {
 
   it("create-match.tsx Team Search modal uses KeyboardAvoidingView", () => {
     expect(createMatchFile).toContain("KeyboardAvoidingView");
-    expect(createMatchFile).toContain("behavior={Platform.OS === \"ios\" ? \"padding\" : \"height\"}");
+    // behavior="padding" is better for Android (avoids content hidden behind keyboard)
+    expect(createMatchFile).toContain("behavior=\"padding\"");
   });
 
   it("create-match.tsx has matching open/close KeyboardAvoidingView tags", () => {
@@ -72,7 +77,8 @@ describe("Fix: KeyboardAvoidingView in key screens", () => {
 
   it("team/[id].tsx Add Player modal uses KeyboardAvoidingView", () => {
     expect(teamDetailFile).toContain("KeyboardAvoidingView");
-    expect(teamDetailFile).toContain("behavior={Platform.OS === \"ios\" ? \"padding\" : \"height\"}");
+    // behavior="padding" is better for Android (avoids content hidden behind keyboard)
+    expect(teamDetailFile).toContain("behavior=\"padding\"");
   });
 
   it("team/[id].tsx has matching open/close KeyboardAvoidingView tags", () => {

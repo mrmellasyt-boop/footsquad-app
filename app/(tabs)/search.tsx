@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
 import {
   Text, View, TouchableOpacity, StyleSheet, ActivityIndicator,
-  FlatList, TextInput, Modal, ScrollView, Platform,
+  FlatList, TextInput, Modal, ScrollView, Platform, KeyboardAvoidingView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/components/screen-container";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
@@ -180,7 +181,15 @@ export default function SearchScreen() {
 
   const hasFilters = !!(filterCity || filterPosition || query);
 
+  const insets = useSafeAreaInsets();
+  const listBottomPad = Math.max(insets.bottom + 80, 100); // tab bar + nav bar
+
   return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={Platform.OS === "android" ? 0 : 0}
+    >
     <ScreenContainer>
       {/* Header */}
       <View style={styles.header}>
@@ -333,7 +342,7 @@ export default function SearchScreen() {
       )}
 
       {/* City Modal */}
-      <Modal visible={showCityModal} transparent animationType="slide">
+      <Modal visible={showCityModal} transparent animationType="slide" statusBarTranslucent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -363,6 +372,7 @@ export default function SearchScreen() {
         </View>
       </Modal>
     </ScreenContainer>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -419,7 +429,7 @@ const styles = StyleSheet.create({
   },
   clearChipText: { color: "#FF4444", fontSize: 13, fontWeight: "600" },
 
-  list: { paddingHorizontal: 20, paddingBottom: 32, gap: 10 },
+  list: { paddingHorizontal: 20, paddingBottom: 100, gap: 10 },
 
   card: {
     backgroundColor: "#1A1A1A", borderRadius: 16,

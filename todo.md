@@ -383,3 +383,14 @@
 - [x] Fix Matches: My Matches tab affiche uniquement les matchs status=confirmed
 - [x] Fix Matches: supprimer le label/tag PUBLIC des cartes de match
 - [x] Fix Match Detail: supprimer le label/tag PUBLIC dans la page détail
+
+## Fix Layout/Clavier Android + Filtre Ville Matches
+
+- [x] Fix layout: KeyboardAvoidingView + ScrollView sur create-match.tsx
+- [x] Fix layout: KeyboardAvoidingView + ScrollView sur search.tsx (Explore)
+- [x] Fix layout: KeyboardAvoidingView + ScrollView sur free-agent/[id].tsx
+- [x] Fix layout: KeyboardAvoidingView + ScrollView sur profile.tsx (modals)
+- [x] Fix layout: KeyboardAvoidingView sur login.tsx et signup.tsx
+- [x] Fix layout: bottom padding suffisant sur tous les écrans avec tab bar
+- [x] Feature: filtre par ville dans All Matches (matches.tsx)
+- [x] Feature: backend route match.publicFeed accepte un paramètre city optionnel

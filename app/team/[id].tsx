@@ -455,7 +455,7 @@ export default function TeamDetailScreen() {
 
       {/* ─── ADD PLAYER MODAL ─── */}
       <Modal visible={showAddPlayer} transparent animationType="slide">
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>

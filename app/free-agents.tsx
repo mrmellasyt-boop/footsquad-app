@@ -179,7 +179,7 @@ export default function FreeAgentsScreen() {
 
       {/* Create Availability Post Modal */}
       <Modal visible={showCreatePost} transparent animationType="slide">
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <View style={styles.modalOverlay}>
           <View style={styles.createModalContent}>
             <View style={styles.modalHeader}>

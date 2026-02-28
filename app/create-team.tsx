@@ -37,7 +37,7 @@ export default function CreateTeamScreen() {
         <Text style={styles.title}>Create Team</Text>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
         <View style={styles.iconCenter}>
           <View style={styles.teamIcon}>

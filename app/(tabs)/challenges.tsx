@@ -158,7 +158,7 @@ function PostChallengeModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   clearBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, backgroundColor: "#2A2A2A" },
   clearBtnText: { color: "#FF4444", fontSize: 13, fontWeight: "600" },
 
-  list: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
+  list: { paddingHorizontal: 20, paddingBottom: 100, gap: 12 },
 
   card: {
     backgroundColor: "#1A1A1A",
