@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
+import fs from "fs";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
@@ -67,6 +69,35 @@ async function startServer() {
       createContext,
     }),
   );
+
+  // ─── Serve Expo web build (SPA fallback) ───
+  // In production, Expo exports a static web build to 'web-build/' or 'dist/web/'
+  // We serve it here and fall back to index.html for client-side routing
+  const webBuildPaths = [
+    path.join(process.cwd(), "web-build"),
+    path.join(process.cwd(), "dist", "web"),
+  ];
+  const webBuildDir = webBuildPaths.find((p) => fs.existsSync(p));
+
+  if (webBuildDir) {
+    console.log(`[web] Serving static files from ${webBuildDir}`);
+    app.use(express.static(webBuildDir));
+    // SPA fallback: serve index.html for all non-API routes
+    app.get("*", (req, res) => {
+      if (req.path.startsWith("/api")) {
+        res.status(404).json({ error: "Not found" });
+        return;
+      }
+      const indexPath = path.join(webBuildDir, "index.html");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Web build not found");
+      }
+    });
+  } else {
+    console.log("[web] No web build found — API-only mode");
+  }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
