@@ -368,3 +368,18 @@
 - [ ] Ajouter clés manquantes : labels de notification (types, actions)
 - [ ] Ajouter clés manquantes : labels de challenge, équipe, joueur
 - [ ] Corriger tous les fichiers tsx pour utiliser useT() sur les textes restants
+
+## Fix Match Confirmé + Layout/Clavier Android
+
+- [ ] Bug: match confirmé - le joueur reste visible dans la page match après confirmation (fach kitconfirmaw makibanoch fi page match)
+- [ ] Fix layout: KeyboardAvoidingView manquant sur les formulaires (create-match, search team, free-agent, profile setup)
+- [ ] Fix layout: bottom padding insuffisant pour éviter le chevauchement avec la barre de navigation Android et la tab bar
+- [ ] Fix layout: ScrollView manquant sur les formulaires avec beaucoup de champs
+- [ ] Fix layout: SafeAreaView mal configuré sur certains écrans
+
+## Fix Matches Screen - Confirmed Only + Remove PUBLIC label
+
+- [x] Fix Matches: All Matches tab affiche uniquement les matchs status=confirmed
+- [x] Fix Matches: My Matches tab affiche uniquement les matchs status=confirmed
+- [x] Fix Matches: supprimer le label/tag PUBLIC des cartes de match
+- [x] Fix Match Detail: supprimer le label/tag PUBLIC dans la page détail

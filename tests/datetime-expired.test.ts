@@ -83,8 +83,9 @@ describe("Fix: Expired Matches Filtering", () => {
   });
 
   it("getPlayerMatches excludes cancelled matches", () => {
-    const block = dbFile.slice(dbFile.indexOf("async function getPlayerMatches"), dbFile.indexOf("async function updateMatch"));
-    expect(block).toContain("ne(matches.status, \"cancelled\")");
+    const block = dbFile.slice(dbFile.indexOf("async function getPlayerMatches"), dbFile.indexOf("async function getMatchesAsTeamB"));
+    // New logic: only confirmed/completed/in_progress (implicitly excludes cancelled and pending)
+    expect(block).toContain("inArray(matches.status, confirmedStatuses)");
   });
 
   it("getPlayerMatches keeps completed matches (no expiry filter on player history)", () => {

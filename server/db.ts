@@ -236,11 +236,11 @@ export async function getPublicMatches() {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
-  // Only show public matches that are not expired and not cancelled
+  // Matches screen: only confirmed matches with both teams assigned, not expired
   return db.select().from(matches)
     .where(and(
-      eq(matches.type, "public"),
-      ne(matches.status, "cancelled"),
+      eq(matches.status, "confirmed"),
+      isNotNull(matches.teamBId),
       gte(matches.matchDate, now)
     ))
     .orderBy(desc(matches.createdAt)).limit(50);
@@ -249,17 +249,25 @@ export async function getPublicMatches() {
 export async function getPlayerMatches(playerId: number) {
   const db = await getDb();
   if (!db) return [];
-  const now = new Date();
-  // Matches where player is in the roster (upcoming + completed, not cancelled)
+  // My Matches: only confirmed (both teams) or completed matches
+  const confirmedStatuses = ["confirmed", "completed", "in_progress"] as const;
   const playerMatchIds = await db.select({ matchId: matchPlayers.matchId }).from(matchPlayers).where(eq(matchPlayers.playerId, playerId));
   const rosterIds = playerMatchIds.map(m => m.matchId);
-  // Also include matches created by this player (as captain) — even if no roster entry yet
+  // Also include matches created by this player (as captain) — only confirmed/completed
   const createdMatches = await db.select().from(matches)
-    .where(and(eq(matches.createdBy, playerId), ne(matches.status, "cancelled")))
+    .where(and(
+      eq(matches.createdBy, playerId),
+      inArray(matches.status, confirmedStatuses),
+      isNotNull(matches.teamBId)
+    ))
     .orderBy(desc(matches.matchDate));
   if (rosterIds.length === 0) return createdMatches;
   const rosterMatches = await db.select().from(matches)
-    .where(and(inArray(matches.id, rosterIds), ne(matches.status, "cancelled")))
+    .where(and(
+      inArray(matches.id, rosterIds),
+      inArray(matches.status, confirmedStatuses),
+      isNotNull(matches.teamBId)
+    ))
     .orderBy(desc(matches.matchDate));
   // Merge and deduplicate by id
   const all = [...createdMatches, ...rosterMatches];
@@ -271,8 +279,12 @@ export async function getPlayerMatches(playerId: number) {
 export async function getMatchesAsTeamB(teamId: number) {
   const db = await getDb();
   if (!db) return [];
+  // Only confirmed/completed matches where this team is team B
   return db.select().from(matches)
-    .where(and(eq(matches.teamBId, teamId), ne(matches.status, "cancelled")))
+    .where(and(
+      eq(matches.teamBId, teamId),
+      inArray(matches.status, ["confirmed", "completed", "in_progress"] as const)
+    ))
     .orderBy(desc(matches.matchDate));
 }
 

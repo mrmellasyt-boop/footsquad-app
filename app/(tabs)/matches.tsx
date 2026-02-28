@@ -97,7 +97,6 @@ export default function MatchesScreen() {
               <View style={styles.matchStatus}>
                 <View style={[styles.statusDot, match.status === "confirmed" && styles.statusConfirmed, match.status === "completed" && styles.statusCompleted]} />
                 <Text style={styles.statusText}>{match.status.toUpperCase()}</Text>
-                <Text style={styles.matchType}>{match.type.toUpperCase()}</Text>
               </View>
               <View style={styles.matchTeams}>
                 <View style={styles.matchTeamCol}>
@@ -251,16 +250,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     flex: 1,
   },
-  matchType: {
-    color: "#39FF14",
-    fontSize: 11,
-    fontWeight: "700",
-    backgroundColor: "rgba(57,255,20,0.15)",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
+
   matchTeams: {
     flexDirection: "row",
     alignItems: "center",

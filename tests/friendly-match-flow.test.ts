@@ -50,20 +50,20 @@ describe("Fix Friendly Match Invite Flow", () => {
   });
 
   describe("Backend: getPublicMatches", () => {
-    it("only returns public type matches", () => {
+    it("only returns confirmed matches with both teams assigned", () => {
       const idx = dbContent.indexOf("getPublicMatches");
       const block = dbContent.slice(idx, idx + 400);
-      expect(block).toContain("eq(matches.type, \"public\")");
+      // New rule: show only confirmed matches (both teams assigned) — no pending/public filter
+      expect(block).toContain('eq(matches.status, "confirmed")');
+      expect(block).toContain('isNotNull(matches.teamBId)');
     });
-
-    it("does not include friendly matches in public feed", () => {
+    it("does not include pending or unconfirmed matches in public feed", () => {
       const idx = dbContent.indexOf("getPublicMatches");
       const block = dbContent.slice(idx, idx + 400);
-      // Must filter by public type
-      expect(block).toContain("eq(matches.type, \"public\")");
+      // Must filter by confirmed status (covers both public and friendly confirmed matches)
+      expect(block).toContain('eq(matches.status, "confirmed")');
     });
   });
-
   describe("Backend: getPlayerMatches", () => {
     it("includes matches created by the player (captain)", () => {
       const idx = dbContent.indexOf("getPlayerMatches");
