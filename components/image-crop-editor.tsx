@@ -227,6 +227,8 @@ function MobileCropEditor({ visible, uri, aspectRatio, onCrop, onCancel }: Props
   const [naturalSize, setNaturalSize] = useState({ w: 1, h: 1 });
   const [processing, setProcessing] = useState(false);
   const [ready, setReady] = useState(false);
+  // Store crop position at gesture start to compute absolute delta correctly
+  const cropBoxAtGestureStart = useRef({ x: 0, y: 0 });
 
   const [ar_w, ar_h] = aspectRatio === "1:1" ? [1, 1] : [9, 16];
 
@@ -242,14 +244,22 @@ function MobileCropEditor({ visible, uri, aspectRatio, onCrop, onCancel }: Props
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: (_, gs) => {
+        // Capture the crop position at gesture start
+        setCropBox(prev => {
+          cropBoxAtGestureStart.current = { x: prev.x, y: prev.y };
+          return prev;
+        });
+      },
       onPanResponderMove: (_, gs) => {
+        // gs.dx/gs.dy are cumulative from gesture start — use stored start position
         setCropBox(prev => {
           const maxX = imgLayout.w - prev.w;
           const maxY = imgLayout.h - prev.h;
           return {
             ...prev,
-            x: Math.max(0, Math.min(maxX, prev.x + gs.dx)),
-            y: Math.max(0, Math.min(maxY, prev.y + gs.dy)),
+            x: Math.max(0, Math.min(maxX, cropBoxAtGestureStart.current.x + gs.dx)),
+            y: Math.max(0, Math.min(maxY, cropBoxAtGestureStart.current.y + gs.dy)),
           };
         });
       },

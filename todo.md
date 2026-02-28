@@ -412,3 +412,5 @@
 - [ ] Feature: crop editor 1:1 pour photo profil et logo équipe avant upload
 - [ ] Feature: crop editor 9:16 pour highlights avant upload
 - [ ] Feature: trim vidéo max 30s avant upload highlights
+- [x] Fix bug: crop photo PanResponder utilise gs.dx/gs.dy cumulatifs au lieu de delta
+- [x] Fix bug: video trim handles ne bougent pas (PanResponder gs.dx cumulatif)

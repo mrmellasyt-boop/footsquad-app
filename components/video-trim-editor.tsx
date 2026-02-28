@@ -327,15 +327,27 @@ function MobileTrimEditor({ visible, uri, maxDuration = 30, onTrim, onCancel }: 
   const trimDuration = endTime - startTime;
   const barWidth = TRIM_BAR_WIDTH;
 
+  // Store values at gesture start to compute absolute delta correctly
+  const startTimeAtGestureStart = useRef(0);
+  const endTimeAtGestureStart = useRef(0);
+
   // Start handle pan responder
   const startPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        // Capture startTime at gesture start
+        setStartTime(prev => {
+          startTimeAtGestureStart.current = prev;
+          return prev;
+        });
+      },
       onPanResponderMove: (_, gs) => {
         if (duration <= 0) return;
+        // gs.dx is cumulative from gesture start — use stored start value
         const delta = (gs.dx / barWidth) * duration;
-        setStartTime(prev => {
-          const newVal = Math.max(0, Math.min(prev + delta, endTime - 1));
+        setStartTime(() => {
+          const newVal = Math.max(0, Math.min(startTimeAtGestureStart.current + delta, endTime - 1));
           return newVal;
         });
       },
@@ -346,11 +358,19 @@ function MobileTrimEditor({ visible, uri, maxDuration = 30, onTrim, onCancel }: 
   const endPan = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        // Capture endTime at gesture start
+        setEndTime(prev => {
+          endTimeAtGestureStart.current = prev;
+          return prev;
+        });
+      },
       onPanResponderMove: (_, gs) => {
         if (duration <= 0) return;
+        // gs.dx is cumulative from gesture start — use stored start value
         const delta = (gs.dx / barWidth) * duration;
-        setEndTime(prev => {
-          const newVal = Math.max(startTime + 1, Math.min(prev + delta, duration, startTime + maxDuration));
+        setEndTime(() => {
+          const newVal = Math.max(startTime + 1, Math.min(endTimeAtGestureStart.current + delta, duration, startTime + maxDuration));
           return newVal;
         });
       },
