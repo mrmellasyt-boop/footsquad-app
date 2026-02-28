@@ -21,7 +21,9 @@ export default function CreateMatchScreen() {
   const [type, setType] = useState<"friendly">("friendly");
   const [city, setCity] = useState("");
   const [pitchName, setPitchName] = useState("");
-  const [format, setFormat] = useState<"5v5" | "8v8" | "11v11">("5v5");
+  const ALL_FORMATS = ["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"] as const;
+  type MatchFormat = typeof ALL_FORMATS[number];
+  const [format, setFormat] = useState<MatchFormat>("5v5");
   const [maxPlayers, setMaxPlayers] = useState("10");
   const [showCityPicker, setShowCityPicker] = useState(false);
 
@@ -31,8 +33,10 @@ export default function CreateMatchScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   // For Android two-step flow
   const [tempDate, setTempDate] = useState<Date>(new Date());
-
-  // Friendly match: team search
+  // Web date/time state
+  const [webDate, setWebDate] = useState("");
+  const [webTime, setWebTime] = useState("");
+  // Friendly match: team searchh
   const [showTeamSearch, setShowTeamSearch] = useState(false);
   const [teamSearchQuery, setTeamSearchQuery] = useState("");
   const [selectedTeam, setSelectedTeam] = useState<{ id: number; name: string; city: string } | null>(null);
@@ -129,6 +133,22 @@ export default function CreateMatchScreen() {
     setShowTimePicker(false);
   };
 
+  // Sync web date+time inputs into selectedDate
+  const handleWebDateChange = (val: string) => {
+    setWebDate(val);
+    if (val && webTime) {
+      const d = new Date(`${val}T${webTime}`);
+      if (!isNaN(d.getTime())) setSelectedDate(d);
+    }
+  };
+  const handleWebTimeChange = (val: string) => {
+    setWebTime(val);
+    if (webDate && val) {
+      const d = new Date(`${webDate}T${val}`);
+      if (!isNaN(d.getTime())) setSelectedDate(d);
+    }
+  };
+
   const isLoading = createMutation.isPending || inviteMutation.isPending;
   const isFormValid = !!city && !!pitchName.trim() && !!selectedDate && (type !== "friendly" || !!selectedTeam);
 
@@ -210,40 +230,54 @@ export default function CreateMatchScreen() {
         <View style={styles.formGroup}>
           <Text style={styles.label}>Date & Time <Text style={styles.required}>*</Text></Text>
 
-          <View style={styles.dateTimeRow}>
-            {/* Date button */}
-            <TouchableOpacity
-              style={[styles.dateBtn, !selectedDate && styles.dateBtnEmpty]}
-              onPress={() => {
-                setTempDate(selectedDate ?? new Date());
-                setShowDatePicker(true);
-              }}
-            >
-              <IconSymbol name="calendar" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
-              <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
-                {selectedDate ? formatDate(selectedDate) : t.createMatch.pickDate}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Time button */}
-            <TouchableOpacity
-              style={[styles.timeBtn, !selectedDate && styles.dateBtnEmpty]}
-              onPress={() => {
-                setTempDate(selectedDate ?? new Date());
-                if (Platform.OS === "android") {
+          {Platform.OS === "web" ? (
+            <View style={styles.dateTimeRow}>
+              {/* @ts-ignore web-only */}
+              <input
+                type="date"
+                value={webDate}
+                min={new Date().toISOString().split("T")[0]}
+                onChange={(e: any) => handleWebDateChange(e.target.value)}
+                style={webInputStyle}
+              />
+              {/* @ts-ignore web-only */}
+              <input
+                type="time"
+                value={webTime}
+                onChange={(e: any) => handleWebTimeChange(e.target.value)}
+                style={webInputStyle}
+              />
+            </View>
+          ) : (
+            <View style={styles.dateTimeRow}>
+              {/* Date button */}
+              <TouchableOpacity
+                style={[styles.dateBtn, !selectedDate && styles.dateBtnEmpty]}
+                onPress={() => {
+                  setTempDate(selectedDate ?? new Date());
+                  setShowDatePicker(true);
+                }}
+              >
+                <IconSymbol name="calendar" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
+                <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
+                  {selectedDate ? formatDate(selectedDate) : t.createMatch.pickDate}
+                </Text>
+              </TouchableOpacity>
+              {/* Time button */}
+              <TouchableOpacity
+                style={[styles.timeBtn, !selectedDate && styles.dateBtnEmpty]}
+                onPress={() => {
+                  setTempDate(selectedDate ?? new Date());
                   setShowTimePicker(true);
-                } else {
-                  setShowTimePicker(true);
-                }
-              }}
-            >
-              <IconSymbol name="clock.fill" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
-              <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
-                {selectedDate ? formatTime(selectedDate) : t.createMatch.pickTime}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
+                }}
+              >
+                <IconSymbol name="clock.fill" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
+                <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
+                  {selectedDate ? formatTime(selectedDate) : t.createMatch.pickTime}
+                </Text>
+              </TouchableOpacity>
+            </View>
+           )}
           {!selectedDate && (
             <Text style={styles.requiredHint}>Date and time are required</Text>
           )}
@@ -253,7 +287,7 @@ export default function CreateMatchScreen() {
         <View style={styles.formGroup}>
           <Text style={styles.label}>Format</Text>
           <View style={styles.formatRow}>
-            {(["5v5", "8v8", "11v11"] as const).map((f) => (
+            {ALL_FORMATS.map((f) => (
               <TouchableOpacity
                 key={f}
                 style={[styles.formatBtn, format === f && styles.formatBtnActive]}
@@ -276,7 +310,7 @@ export default function CreateMatchScreen() {
             onChangeText={setMaxPlayers}
             keyboardType="number-pad"
           />
-          <Text style={styles.fieldHint}>👥 Ce nombre s'applique par équipe (ex: 5 = 5 vs 5)</Text>
+          <Text style={styles.fieldHint}>👥 Players per team — auto-set by format (e.g. 5v5 = 5 per team)</Text>
         </View>
 
         <TouchableOpacity
@@ -500,3 +534,16 @@ const styles = StyleSheet.create({
   typeHint: { color: "#8A8A8A", fontSize: 12, marginTop: 8, lineHeight: 18 },
   fieldHint: { color: "#8A8A8A", fontSize: 12, marginTop: 6, lineHeight: 18 },
 });
+
+// Web-only inline style for HTML date/time inputs
+const webInputStyle = {
+  flex: 1,
+  backgroundColor: "#1A1A1A",
+  color: "#FFFFFF",
+  border: "1px solid #2A2A2A",
+  borderRadius: 12,
+  padding: "12px 14px",
+  fontSize: 14,
+  outline: "none",
+  colorScheme: "dark",
+} as any;

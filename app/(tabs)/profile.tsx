@@ -549,6 +549,7 @@ function ProfileView() {
       <GalleryPicker
         visible={showPhotoPicker}
         mediaType="photo"
+        cropAspect="1:1"
         onPick={handlePhotoPicked}
         onClose={() => setShowPhotoPicker(false)}
       />

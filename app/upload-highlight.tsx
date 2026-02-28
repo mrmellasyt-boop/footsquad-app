@@ -131,6 +131,7 @@ export default function UploadHighlightScreen() {
         visible={pickerMode !== null}
         mediaType={pickerMode ?? "photo"}
         maxVideoDuration={30}
+        cropAspect={pickerMode === "photo" ? "9:16" : undefined}
         onPick={handlePicked}
         onClose={() => setPickerMode(null)}
       />

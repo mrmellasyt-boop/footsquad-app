@@ -394,3 +394,21 @@
 - [x] Fix layout: bottom padding suffisant sur tous les écrans avec tab bar
 - [x] Feature: filtre par ville dans All Matches (matches.tsx)
 - [x] Feature: backend route match.publicFeed accepte un paramètre city optionnel
+
+## Web Fixes + Media Editor
+- [ ] Fix photo upload web: utiliser file picker HTML au lieu de ImagePicker (qui nécessite des permissions mobiles)
+- [ ] Fix date/time picker web: utiliser des inputs HTML natifs (type=date, type=time)
+- [ ] Fix strings FR→EN: remplacer tous les textes français dans l'UI par de l'anglais
+- [ ] Fix formats match: ajouter 4v4, 6v6, 7v7, 9v9, 10v10 (actuellement limité à 5v5, 8v8, 11v11)
+- [ ] Feature: crop editor 1:1 pour photo profil et logo équipe avant upload
+- [ ] Feature: crop editor 9:16 pour highlights avant upload
+- [ ] Feature: trim vidéo max 30s avant upload highlights
+
+## Web Fixes + Media Editor
+- [ ] Fix photo upload web: utiliser file picker HTML au lieu de ImagePicker (permissions mobiles)
+- [ ] Fix date/time picker web: utiliser des inputs HTML natifs (type=date, type=time)
+- [ ] Fix strings FR→EN: remplacer tous les textes français dans l'UI
+- [ ] Fix formats match: ajouter 4v4, 6v6, 7v7, 9v9, 10v10
+- [ ] Feature: crop editor 1:1 pour photo profil et logo équipe avant upload
+- [ ] Feature: crop editor 9:16 pour highlights avant upload
+- [ ] Feature: trim vidéo max 30s avant upload highlights

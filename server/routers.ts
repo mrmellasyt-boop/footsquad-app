@@ -237,7 +237,7 @@ export const appRouter = router({
       city: z.string().min(1),
       pitchName: z.string().min(1),
       matchDate: z.string(),
-      format: z.enum(["5v5", "8v8", "11v11"]),
+      format: z.enum(["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"]),
       maxPlayers: z.number().min(2),
       teamBId: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
@@ -1012,14 +1012,14 @@ export const appRouter = router({
   challenge: router({
     list: publicProcedure.input(z.object({
       city: z.string().optional(),
-      format: z.enum(["5v5", "8v8", "11v11"]).optional(),
+      format: z.enum(["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"]).optional(),
     })).query(async ({ input }) => {
       return db.getChallenges(input);
     }),
 
     create: protectedProcedure.input(z.object({
       city: z.string().min(1),
-      format: z.enum(["5v5", "8v8", "11v11"]),
+      format: z.enum(["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"]),
       preferredDate: z.string().optional(),
       message: z.string().max(280).optional(),
     })).mutation(async ({ ctx, input }) => {
@@ -1051,7 +1051,7 @@ export const appRouter = router({
       const matchDate = new Date();
       matchDate.setDate(matchDate.getDate() + 7); // Default: 1 week from now
       const format = challenge.format;
-      const maxPerTeam = format === "5v5" ? 5 : format === "8v8" ? 8 : 11;
+      const maxPerTeam = parseInt(format.split("v")[0], 10);
       const matchId = await db.createMatch({
         type: "friendly",
         status: "confirmed",

@@ -62,7 +62,7 @@ export const matches = mysqlTable("matches", {
   city: varchar("city", { length: 100 }).notNull(),
   pitchName: varchar("pitchName", { length: 255 }).notNull(),
   matchDate: timestamp("matchDate").notNull(),
-  format: mysqlEnum("format", ["5v5", "8v8", "11v11"]).notNull(),
+  format: mysqlEnum("format", ["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"]).notNull(),
   maxPlayers: int("maxPlayers").notNull(),
   maxPlayersPerTeam: int("maxPlayersPerTeam").notNull().default(5),
   teamAId: int("teamAId").notNull(),
@@ -166,7 +166,7 @@ export const challenges = mysqlTable("challenges", {
   id: int("id").autoincrement().primaryKey(),
   teamId: int("teamId").notNull(),
   city: varchar("city", { length: 100 }).notNull(),
-  format: mysqlEnum("format", ["5v5", "8v8", "11v11"]).notNull(),
+  format: mysqlEnum("format", ["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"]).notNull(),
   preferredDate: varchar("preferredDate", { length: 100 }), // free text e.g. "Samedi matin"
   message: text("message"),
   status: mysqlEnum("status", ["open", "accepted", "cancelled"]).default("open").notNull(),

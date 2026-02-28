@@ -511,6 +511,7 @@ export default function TeamDetailScreen() {
       <GalleryPicker
         visible={showLogoPicker}
         mediaType="photo"
+        cropAspect="1:1"
         onPick={handleLogoPicked}
         onClose={() => setShowLogoPicker(false)}
       />
