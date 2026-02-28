@@ -24,6 +24,7 @@ export default function CreateMatchScreen() {
   const ALL_FORMATS = ["4v4", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11"] as const;
   type MatchFormat = typeof ALL_FORMATS[number];
   const [format, setFormat] = useState<MatchFormat>("5v5");
+  const [formatDropdownOpen, setFormatDropdownOpen] = useState(false);
   const [maxPlayers, setMaxPlayers] = useState("10");
   const [showCityPicker, setShowCityPicker] = useState(false);
 
@@ -286,17 +287,13 @@ export default function CreateMatchScreen() {
         {/* Format */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Format</Text>
-          <View style={styles.formatRow}>
-            {ALL_FORMATS.map((f) => (
-              <TouchableOpacity
-                key={f}
-                style={[styles.formatBtn, format === f && styles.formatBtnActive]}
-                onPress={() => setFormat(f)}
-              >
-                <Text style={[styles.formatText, format === f && styles.formatTextActive]}>{f}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          <TouchableOpacity
+            style={styles.dropdownBtn}
+            onPress={() => setFormatDropdownOpen(true)}
+          >
+            <Text style={styles.dropdownValue}>{format}</Text>
+            <IconSymbol name="chevron.right" size={16} color="#8A8A8A" style={{ transform: [{ rotate: "90deg" }] }} />
+          </TouchableOpacity>
         </View>
 
         {/* Max Players */}
@@ -403,6 +400,30 @@ export default function CreateMatchScreen() {
         )
       )}
 
+      {/* Format Dropdown Modal */}
+      <Modal
+        visible={formatDropdownOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFormatDropdownOpen(false)}
+      >
+        <TouchableOpacity style={styles.dropdownOverlay} activeOpacity={1} onPress={() => setFormatDropdownOpen(false)}>
+          <View style={styles.dropdownMenu}>
+            <Text style={styles.dropdownMenuTitle}>Select Format</Text>
+            {ALL_FORMATS.map((f) => (
+              <TouchableOpacity
+                key={f}
+                style={[styles.dropdownItem, format === f && styles.dropdownItemActive]}
+                onPress={() => { setFormat(f); setFormatDropdownOpen(false); }}
+              >
+                <Text style={[styles.dropdownItemText, format === f && styles.dropdownItemTextActive]}>{f}</Text>
+                {format === f && <Text style={{ color: "#39FF14", fontSize: 16 }}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* City Picker Modal */}
       <Modal visible={showCityPicker} transparent animationType="slide">
         <View style={styles.modalOverlay}>
@@ -504,11 +525,15 @@ const styles = StyleSheet.create({
   typeText: { color: "#FFFFFF", fontWeight: "700", fontSize: 15 },
   typeTextActive: { color: "#39FF14" },
   typeDesc: { color: "#8A8A8A", fontSize: 11, marginTop: 4 },
-  formatRow: { flexDirection: "row", gap: 8 },
-  formatBtn: { flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: "#1A1A1A", alignItems: "center", borderWidth: 1, borderColor: "#2A2A2A" },
-  formatBtnActive: { backgroundColor: "#39FF14", borderColor: "#39FF14" },
-  formatText: { color: "#FFFFFF", fontWeight: "700", fontSize: 14 },
-  formatTextActive: { color: "#0A0A0A" },
+  dropdownBtn: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: "#1A1A1A", borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: "#2A2A2A" },
+  dropdownValue: { color: "#FFFFFF", fontWeight: "700", fontSize: 16 },
+  dropdownOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center" },
+  dropdownMenu: { backgroundColor: "#1A1A1A", borderRadius: 16, paddingVertical: 8, width: 220, borderWidth: 1, borderColor: "#2A2A2A" },
+  dropdownMenuTitle: { color: "#8A8A8A", fontSize: 12, fontWeight: "600", textAlign: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#2A2A2A", marginBottom: 4 },
+  dropdownItem: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingVertical: 13, borderRadius: 10 },
+  dropdownItemActive: { backgroundColor: "rgba(57,255,20,0.1)" },
+  dropdownItemText: { color: "#FFFFFF", fontWeight: "600", fontSize: 15 },
+  dropdownItemTextActive: { color: "#39FF14" },
   createBtn: { backgroundColor: "#39FF14", borderRadius: 16, paddingVertical: 16, alignItems: "center", marginTop: 12 },
   btnDisabled: { opacity: 0.4 },
   createBtnText: { color: "#0A0A0A", fontWeight: "800", fontSize: 16 },
