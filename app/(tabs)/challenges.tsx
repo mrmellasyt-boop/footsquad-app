@@ -15,10 +15,10 @@ import { useT } from "@/lib/i18n/LanguageContext";
 const FORMATS = ["5v5", "8v8", "11v11"] as const;
 type Format = (typeof FORMATS)[number];
 
-function timeAgo(date: string | Date) {
+function timeAgo(date: string | Date, t: ReturnType<typeof useT>) {
   const diff = Date.now() - new Date(date).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
+  if (mins < 1) return t.status.justNow;
   if (mins < 60) return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs}h ago`;
@@ -90,7 +90,7 @@ function ChallengeCard({
 
       {/* Footer */}
       <View style={styles.cardFooter}>
-        <Text style={styles.timeAgo}>{timeAgo(item.createdAt)}</Text>
+        <Text style={styles.timeAgo}>{timeAgo(item.createdAt, t)}</Text>
         <View style={styles.actions}>
           {isMine ? (
             <TouchableOpacity
@@ -125,6 +125,7 @@ function PostChallengeModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const t = useT();
   const [city, setCity] = useState("");
   const [format, setFormat] = useState<Format>("5v5");
   const [preferredDate, setPreferredDate] = useState("");
@@ -211,7 +212,7 @@ function PostChallengeModal({
                 <Text style={styles.label}>Message (optional)</Text>
                 <TextInput
                   style={[styles.textInput, styles.textArea]}
-                  placeholder="Add a message to your challenge..."
+                  placeholder={t.challenges.addMessage}
                   placeholderTextColor="#555"
                   value={message}
                   onChangeText={setMessage}
@@ -298,9 +299,9 @@ export default function ChallengesScreen() {
       utils.challenge.list.invalidate();
       utils.challenge.myTeamChallenge.invalidate();
       Alert.alert(
-        "Challenge Accepted! ⚡",
+        t.challenges.acceptedTitle,
         "A match has been created. Coordinate with the opponent to set the exact date and pitch.",
-        [{ text: "View Match", onPress: () => router.push(`/match/${data.matchId}` as any) }, { text: "OK" }]
+        [{ text: t.challenges.viewMatch, onPress: () => router.push(`/match/${data.matchId}` as any) }, { text: t.common.ok }]
       );
     },
     onError: (err) => Alert.alert("Error", err.message),
@@ -316,8 +317,8 @@ export default function ChallengesScreen() {
 
   const handleAccept = (challengeId: number) => {
     Alert.alert(
-      "Accept Challenge?",
-      "This will create a confirmed match between your teams. You'll need to coordinate the exact date and pitch.",
+      t.challenges.acceptTitle,
+      t.challenges.acceptBody,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Accept", style: "default", onPress: () => acceptMutation.mutate({ challengeId }) },
@@ -327,8 +328,8 @@ export default function ChallengesScreen() {
 
   const handleCancel = (challengeId: number) => {
     Alert.alert(
-      "Cancel Challenge?",
-      "Your challenge will be removed from the feed.",
+      t.challenges.cancelTitle,
+      t.challenges.cancelBody,
       [
         { text: "Keep it", style: "cancel" },
         { text: "Cancel Challenge", style: "destructive", onPress: () => cancelMutation.mutate({ challengeId }) },

@@ -221,7 +221,7 @@ export default function CreateMatchScreen() {
             >
               <IconSymbol name="calendar" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
               <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
-                {selectedDate ? formatDate(selectedDate) : "Pick date"}
+                {selectedDate ? formatDate(selectedDate) : t.createMatch.pickDate}
               </Text>
             </TouchableOpacity>
 
@@ -239,7 +239,7 @@ export default function CreateMatchScreen() {
             >
               <IconSymbol name="clock.fill" size={18} color={selectedDate ? "#39FF14" : "#8A8A8A"} />
               <Text style={selectedDate ? styles.dateText : styles.datePlaceholder}>
-                {selectedDate ? formatTime(selectedDate) : "Pick time"}
+                {selectedDate ? formatTime(selectedDate) : t.createMatch.pickTime}
               </Text>
             </TouchableOpacity>
           </View>
@@ -288,7 +288,7 @@ export default function CreateMatchScreen() {
             <ActivityIndicator color="#0A0A0A" />
           ) : (
             <Text style={styles.createBtnText}>
-              {type === "friendly" ? "Create & Send Invitation" : "Create Match"}
+              {type === "friendly" ? t.createMatch.createAndSend : t.createMatch.createMatch}
             </Text>
           )}
         </TouchableOpacity>
@@ -403,7 +403,7 @@ export default function CreateMatchScreen() {
             </View>
             <TextInput
               style={styles.searchInput}
-              placeholder="Search team name..."
+              placeholder={t.createMatch.searchTeam}
               placeholderTextColor="#555"
               value={teamSearchQuery}
               onChangeText={setTeamSearchQuery}

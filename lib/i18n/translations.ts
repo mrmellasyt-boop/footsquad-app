@@ -119,6 +119,13 @@ export const translations = {
       needTeam: "You need a team to post a challenge",
       needCaptain: "Only captains can post challenges",
       alreadyChallenge: "You already have an open challenge",
+      acceptedTitle: "Challenge Accepted! ⚡",
+      viewMatch: "View Match",
+      acceptTitle: "Accept Challenge?",
+      acceptBody: "This will create a confirmed match between your teams. You'll need to coordinate the exact date and pitch.",
+      cancelTitle: "Cancel Challenge?",
+      cancelBody: "Your challenge will be removed from the feed.",
+      addMessage: "Add a message to your challenge...",
     },
 
     // ─── Explore / Search ───
@@ -193,6 +200,8 @@ export const translations = {
       currentPassword: "Current Password",
       newPassword: "New Password",
       confirmPassword: "Confirm Password",
+      selectCountry: "Select Country",
+      creating: "Creating...",
     },
 
     // ─── Team ───
@@ -224,6 +233,12 @@ export const translations = {
       avgRating: "Avg Rating",
       deleteConfirm: "Are you sure you want to delete this team? This action cannot be undone.",
       leaveConfirm: "Are you sure you want to leave this team?",
+      deleteTitle: "Delete Team",
+      deleteBody: "Are you sure you want to delete this team? This action cannot be undone. All members will be removed.",
+      played: "Played",
+      searchPlayer: "Search player by name or city...",
+      requestSent: "Request Sent",
+
     },
 
     // ─── Post-Match ───
@@ -265,6 +280,62 @@ export const translations = {
       somethingWentWrong: "Something went wrong",
     },
 
+
+    // ─── Errors & Status ───
+    errors: {
+      fillBothFields: "Fill both fields",
+      minSixChars: "Min 6 characters",
+      failed: "Failed",
+      missingCodeState: "Missing code or state parameter",
+      authFailed: "Authentication failed",
+    },
+    status: {
+      justNow: "Just now",
+      expired: "Expired",
+    },
+    // ─── Free Agent ───
+    freeAgent: {
+      invite: "Invite Player",
+      inviteConfirm: "Invite this player to your team?",
+      inviteBtn: "Invite",
+      following: "Following",
+      follow: "Follow",
+      myTeam: "My Team",
+      tbd: "TBD",
+      lookingFor: "Looking for a team",
+    },
+    // ─── Highlights ───
+    highlights: {
+      city: "City",
+      team: "Team",
+      unknown: "Unknown",
+      noHighlights: "No highlights match your filters.",
+    },
+    // ─── Match ───
+    match: {
+      sendingChallenge: "Sending Challenge...",
+      requestToPlay: "Request to Play vs this Team",
+      viewMatch: "View Match",
+      challengeAccepted: "Challenge Accepted! ⚡",
+    },
+    // ─── Create Match ───
+    createMatch: {
+      pickDate: "Pick date",
+      pickTime: "Pick time",
+      createAndSend: "Create & Send Invitation",
+      createMatch: "Create Match",
+      searchTeam: "Search team name...",
+    },
+    // ─── Free Agents ───
+    freeAgents: {
+      weekdayMornings: "Weekday mornings",
+      weekdayEvenings: "Weekday evenings",
+      weekendMornings: "Weekend mornings",
+      weekendAfternoons: "Weekend afternoons",
+      weekendEvenings: "Weekend evenings",
+      anytime: "Anytime",
+      tellCaptains: "Tell captains about yourself, your experience, what you're looking for...",
+    },
     // ─── Language Names ───
     languages: {
       en: "English",
@@ -512,6 +583,35 @@ export const translations = {
       ar: "العربية",
       fr: "Français",
     },
+    errors: {
+      fillBothFields: 'Remplir les deux champs',
+      minSixChars: 'Min 6 caracteres',
+      failed: 'Echec',
+      missingCodeState: 'Parametre manquant',
+      authFailed: 'Authentification echouee',
+    },
+    status: { justNow: "A l'instant", expired: 'Expire' },
+    freeAgent: {
+      invite: 'Inviter le joueur', inviteConfirm: 'Inviter ce joueur dans ton equipe ?',
+      inviteBtn: 'Inviter', following: 'Abonne', follow: 'Suivre',
+      myTeam: 'Mon equipe', tbd: 'A definir', lookingFor: 'Cherche une equipe',
+    },
+    highlights: { city: 'Ville', team: 'Equipe', unknown: 'Inconnu', noHighlights: 'Aucun highlight.' },
+    match: {
+      sendingChallenge: 'Envoi du defi...', requestToPlay: 'Demander a jouer contre cette equipe',
+      viewMatch: 'Voir le match', challengeAccepted: 'Defi accepte ! ⚡',
+    },
+    createMatch: {
+      pickDate: 'Choisir la date', pickTime: "Choisir l'heure",
+      createAndSend: "Creer et Envoyer l'invitation", createMatch: 'Creer le match',
+      searchTeam: "Rechercher le nom de l'equipe...",
+    },
+    freeAgents: {
+      weekdayMornings: 'Matins en semaine', weekdayEvenings: 'Soirees en semaine',
+      weekendMornings: 'Matins le week-end', weekendAfternoons: 'Apres-midis le week-end',
+      weekendEvenings: 'Soirees le week-end', anytime: "N'importe quand",
+      tellCaptains: 'Parle aux capitaines de toi...',
+    },
   },
 
   ar: {
@@ -621,6 +721,13 @@ export const translations = {
       needTeam: "تحتاج فريقاً لنشر تحدي",
       needCaptain: "فقط القادة يمكنهم نشر التحديات",
       alreadyChallenge: "لديك تحدٍ مفتوح بالفعل",
+      acceptedTitle: "تم قبول التحدي! ⚡",
+      viewMatch: "عرض المباراة",
+      acceptTitle: "قبول التحدي؟",
+      acceptBody: "سيتم إنشاء مباراة مؤكدة بين الفريقين. ستحتاج إلى تنسيق التاريخ والملعب.",
+      cancelTitle: "إلغاء التحدي؟",
+      cancelBody: "سيتم إزالة تحديك من التغذية.",
+      addMessage: "أضف رسالة لتحديك...",
     },
     explore: {
       title: "استكشاف",
@@ -757,6 +864,51 @@ export const translations = {
       ar: "العربية",
       fr: "Français",
     },
+
+    errors: {
+      fillBothFields: "يرجى ملء الحقلين",
+      minSixChars: "6 أحرف على الأقل",
+      failed: "فشل",
+      missingCodeState: "معامل الكود أو الحالة مفقود",
+      authFailed: "فشل المصادقة",
+    },
+    status: {
+      justNow: "الآن",
+      expired: "منتهي",
+      loading: "جاري التحميل...",
+    },
+    freeAgent: {
+      invite: "دعوة اللاعب",
+      inviteConfirm: "دعوة هذا اللاعب لفريقك؟",
+      inviteBtn: "دعوة",
+      following: "تتابع",
+      follow: "متابعة",
+      myTeam: "فريقي",
+      tbd: "لم يحدد بعد",
+      lookingFor: "يبحث عن فريق",
+    },
+    highlights: {
+      city: "المدينة",
+      team: "الفريق",
+      unknown: "غير معروف",
+      noHighlights: "لا توجد مقاطع تطابق الفلاتر.",
+    },
+    match: {
+      sendingChallenge: "إرسال التحدي...",
+      requestToPlay: "طلب اللعب ضد هذا الفريق",
+      viewMatch: "عرض المباراة",
+      challengeAccepted: "تم قبول التحدي! ⚡",
+    },
+
+    createMatch: {
+      pickDate: "اختر التاريخ",
+      pickTime: "اختر الوقت",
+      createAndSend: "إنشاء وإرسال الدعوة",
+      createMatch: "إنشاء مباراة",
+      searchTeam: "ابحث عن اسم الفريق...",
+    },
+
+
   },
 } as const;
 

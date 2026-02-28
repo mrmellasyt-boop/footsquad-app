@@ -94,7 +94,8 @@ describe("Fix Friendly Match Invite Flow", () => {
     });
 
     it("shows 'Create & Send Invitation' button for friendly matches", () => {
-      expect(createMatchContent).toContain("Create & Send Invitation");
+      // Uses translation key t.createMatch.createAndSend (value: 'Create & Send Invitation')
+      expect(createMatchContent).toContain("createAndSend");
     });
   });
 

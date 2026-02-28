@@ -164,8 +164,8 @@ export default function TeamDetailScreen() {
 
   const handleDeleteTeam = () => {
     Alert.alert(
-      "Delete Team",
-      "Are you sure you want to delete this team? This action cannot be undone. All members will be removed.",
+      t.team.deleteTitle,
+      t.team.deleteBody,
       [
         { text: "Cancel", style: "cancel" },
         { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate({ teamId }) },
@@ -299,7 +299,7 @@ export default function TeamDetailScreen() {
 
             {/* ─── PERFORMANCE STATS ─── */}
             <View style={styles.section}>
-              <SectionHeader title="Performance" icon="trophy.fill" />
+              <SectionHeader title={t.team.performance} icon="trophy.fill" />
               {stats ? (
                 <>
                   {/* Win / Draw / Loss row */}
@@ -320,7 +320,7 @@ export default function TeamDetailScreen() {
 
                   {/* Stats grid */}
                   <View style={styles.statsGrid}>
-                    <StatCard value={stats.totalPlayed} label="Played" />
+                    <StatCard value={stats.totalPlayed} label={t.team.played} />
                     <StatCard value={`${stats.winRate}%`} label="Win Rate" color={stats.winRate >= 50 ? "#39FF14" : "#FF6B6B"} />
                     <StatCard value={stats.goalsScored} label="Goals For" color="#39FF14" />
                     <StatCard value={stats.goalsConceded} label="Goals Ag." color="#FF6B6B" />
@@ -350,7 +350,7 @@ export default function TeamDetailScreen() {
             {/* ─── TOP PLAYER ─── */}
             {topPlayer && (
               <View style={styles.section}>
-                <SectionHeader title="Best Player" icon="star.fill" />
+                <SectionHeader title={t.team.bestPlayer} icon="star.fill" />
                 <TouchableOpacity
                   style={styles.topPlayerCard}
                   onPress={() => router.push(`/player/${topPlayer.id}` as any)}
@@ -466,7 +466,7 @@ export default function TeamDetailScreen() {
               </View>
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search player by name or city..."
+                placeholder={t.team.searchPlayer}
                 placeholderTextColor="#555"
                 value={searchQuery}
                 onChangeText={setSearchQuery}

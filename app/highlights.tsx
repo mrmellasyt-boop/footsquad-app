@@ -71,7 +71,7 @@ export default function AllHighlightsScreen() {
         >
           <IconSymbol name="location.fill" size={13} color={cityFilter ? "#0A0A0A" : "#39FF14"} />
           <Text style={[styles.filterChipText, cityFilter && styles.filterChipTextActive]}>
-            {cityFilter || "City"}
+            {cityFilter || t.highlights.city}
           </Text>
           {cityFilter ? (
             <TouchableOpacity onPress={() => setCityFilter("")}>
@@ -89,7 +89,7 @@ export default function AllHighlightsScreen() {
         >
           <IconSymbol name="shield.fill" size={13} color={teamFilter ? "#0A0A0A" : "#39FF14"} />
           <Text style={[styles.filterChipText, teamFilter && styles.filterChipTextActive]}>
-            {teamFilter || "Team"}
+            {teamFilter || t.highlights.team}
           </Text>
           {teamFilter ? (
             <TouchableOpacity onPress={() => setTeamFilter("")}>
@@ -171,7 +171,7 @@ export default function AllHighlightsScreen() {
           <Text style={styles.emptyTitle}>No Highlights</Text>
           <Text style={styles.emptyDesc}>
             {cityFilter || teamFilter
-              ? "No highlights match your filters."
+              ? t.highlights.noHighlights
               : "No active highlights yet. Be the first to post!"}
           </Text>
         </View>
@@ -209,7 +209,7 @@ export default function AllHighlightsScreen() {
               {/* Bottom overlay */}
               <View style={styles.gridCardOverlay}>
                 <Text style={styles.gridPlayerName} numberOfLines={1}>
-                  {item.player?.fullName ?? "Unknown"}
+                  {item.player?.fullName ?? t.highlights.unknown}
                 </Text>
                 <Text style={styles.gridCity} numberOfLines={1}>
                   {item.player?.city ?? ""}

@@ -426,7 +426,7 @@ export default function MatchDetailScreen() {
               >
                 <IconSymbol name="sportscourt.fill" size={20} color="#0A0A0A" />
                 <Text style={styles.requestToPlayBtnText}>
-                  {requestToPlayMutation.isPending ? "Sending Challenge..." : "Request to Play vs this Team"}
+                  {requestToPlayMutation.isPending ? t.match.sendingChallenge : t.match.requestToPlay}
                 </Text>
               </TouchableOpacity>
             )}

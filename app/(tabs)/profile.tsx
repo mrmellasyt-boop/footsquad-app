@@ -13,6 +13,7 @@ import { useT, useLanguage } from "@/lib/i18n/LanguageContext";
 import type { Language } from "@/lib/i18n/translations";
 
 function ProfileSetup() {
+  const t = useT();
   const [fullName, setFullName] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
@@ -60,7 +61,7 @@ function ProfileSetup() {
         <Text style={styles.label}>Country</Text>
         <TouchableOpacity style={styles.selectBtn} onPress={() => setShowCountryPicker(true)}>
           <Text style={country ? styles.selectText : styles.selectPlaceholder}>
-            {country ? `${countryFlag} ${country}` : "Select country"}
+            {country ? `${countryFlag} ${country}` : t.profile.selectCountry}
           </Text>
           <IconSymbol name="chevron.right" size={16} color="#8A8A8A" />
         </TouchableOpacity>
@@ -87,7 +88,7 @@ function ProfileSetup() {
         disabled={!fullName.trim() || !city || !country || createMutation.isPending}
       >
         <Text style={styles.createProfileBtnText}>
-          {createMutation.isPending ? "Creating..." : "Create Profile"}
+          {createMutation.isPending ? t.profile.creating : t.profile.createProfile}
         </Text>
       </TouchableOpacity>
 
@@ -204,8 +205,8 @@ function ProfileView() {
 
   const handleChangePassword = async () => {
     setPwdError("");
-    if (!currentPwd || !newPwd) { setPwdError("Fill both fields"); return; }
-    if (newPwd.length < 6) { setPwdError("Min 6 characters"); return; }
+    if (!currentPwd || !newPwd) { setPwdError(t.errors.fillBothFields); return; }
+    if (newPwd.length < 6) { setPwdError(t.errors.minSixChars); return; }
     setPwdLoading(true);
     try {
       await Api.changePassword(currentPwd, newPwd);
@@ -214,7 +215,7 @@ function ProfileView() {
       setCurrentPwd("");
       setNewPwd("");
     } catch (err: any) {
-      setPwdError(err.message || "Failed");
+      setPwdError(err.message || t.errors.failed);
     } finally {
       setPwdLoading(false);
     }

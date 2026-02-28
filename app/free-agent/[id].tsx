@@ -39,12 +39,12 @@ export default function FreeAgentDetailScreen() {
 
   const handleInviteToMatch = (matchId: number, teamId: number) => {
     Alert.alert(
-      "Invite Player",
+      t.freeAgent.invite,
       `Add ${player?.fullName} to this match?`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Invite",
+          text: t.freeAgent.inviteBtn,
           onPress: () => joinMutation.mutate({ matchId, teamId, teamSide: "A" }),
         },
       ]
@@ -186,7 +186,7 @@ export default function FreeAgentDetailScreen() {
                 color={isFollowing ? "#39FF14" : "#8A8A8A"}
               />
               <Text style={[styles.followBtnText, isFollowing && styles.followingBtnText]}>
-                {isFollowing ? "Following" : "Follow"}
+                {isFollowing ? t.freeAgent.following : t.freeAgent.follow}
               </Text>
             </TouchableOpacity>
           </View>
@@ -244,7 +244,7 @@ export default function FreeAgentDetailScreen() {
                   >
                     <View style={styles.matchRowInfo}>
                       <Text style={styles.matchRowName}>
-                        {match.teamA?.name ?? "My Team"} vs {match.teamB?.name ?? "TBD"}
+                        {match.teamA?.name ?? t.freeAgent.myTeam} vs {match.teamB?.name ?? t.freeAgent.tbd}
                       </Text>
                       <Text style={styles.matchRowMeta}>
                         {match.city} • {match.format} • {new Date(match.matchDate).toLocaleDateString()}

@@ -120,7 +120,8 @@ describe("Fix Public Match: Request to Play + Home Filtering", () => {
     });
 
     it("shows 'Request to Play vs this Team' button for other captains on public matches", () => {
-      expect(matchDetailContent).toContain("Request to Play vs this Team");
+      // Uses translation key t.match.requestToPlay (value: 'Request to Play vs this Team')
+      expect(matchDetailContent).toContain("requestToPlay");
       expect(matchDetailContent).toContain("canRequestToPlay");
     });
 

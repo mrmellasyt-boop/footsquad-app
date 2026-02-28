@@ -358,3 +358,13 @@
 - [x] Fix 14 autres fichiers : useT() importé et textes en dur remplacés
 - [x] Ajout section auth dans translations.ts (EN/FR/AR)
 - [x] Test free agent corrigé pour filtrer uniquement les joueurs NPC
+
+## Traductions complètes EN/FR/AR (28 Feb 2026)
+
+- [ ] Audit complet des textes en dur restants dans tous les fichiers tsx
+- [ ] Ajouter clés manquantes dans translations.ts : statuts match (pending/confirmed/completed/cancelled/expired)
+- [ ] Ajouter clés manquantes : labels de position (GK/DEF/MID/ATT)
+- [ ] Ajouter clés manquantes : messages d'erreur backend (Alert.alert)
+- [ ] Ajouter clés manquantes : labels de notification (types, actions)
+- [ ] Ajouter clés manquantes : labels de challenge, équipe, joueur
+- [ ] Corriger tous les fichiers tsx pour utiliser useT() sur les textes restants
